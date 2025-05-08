@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Virus Vanguard</title>
+        <style>
+            html, body {
+                margin: 0;
+                background-color: black;
+                background-size: cover;
+                background-position-x: right;
+                background-position-y: center;
+            }
+            body.level0 {
+                background-image: url('./assets/bg_level0.png');
+            }
+            body.level1 {
+                background-image: url('./assets/BG_LevelArena.png');
+            }
+            body.level2 {
+                background-image: url('./assets/BG_LevelArena.png');
+            }
+            body.level3 {
+                background-image: url('./assets/BG_LevelArena.png');
+            }
+            body.level4 {
+                background-image: url('./assets/BG_LevelArena.png');
+            }
+            body.level5 {
+                background-image: url('./assets/BG_LevelArena.png');
+            } body.victory {
+                background-image: url('./assets/victory.png');
+            } body.startScreen {
+                background-image: url('./assets/startscreen.png');
+            } body.goNextLevel {
+                background-image: url('./assets/BG_LevelArena_lit.png');
+            }
+            canvas {
+                display: block;
+                margin: auto;
+            }
+        </style>
+    </head>
+    <body>
+        <canvas id="game"></canvas>
+        <script src="build/app.js" type="module"></script>
+    </body>
+</html>
