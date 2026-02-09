@@ -3,6 +3,8 @@ import MrHacker from './GameItem/MrHacker.js';
 import KeyListener from './KeyListener.js';
 import CanvasRenderer from './CanvasRenderer.js';
 import Player from './Player.js';
+import { LEVEL_LAYOUTS } from './config/LevelConfig.js';
+import GameConfig from './config/GameConfig.js';
 export default class Level5 extends Level {
     currentDialogue;
     keyListener;
@@ -15,18 +17,13 @@ export default class Level5 extends Level {
         this.player = new Player();
         this.keyListener = new KeyListener();
         this.hasStarted = false;
-        this.maxX = 0.91 * this.canvas.width - this.player.getWidth() / 2;
-        this.maxY = 0.86 * this.canvas.height - this.player.getHeight() / 2;
-        this.minX = 0.05 * this.canvas.width;
-        this.minY = 0.1 * this.canvas.height;
+        this.applyLayout(LEVEL_LAYOUTS[5]);
     }
     isGameWon() {
         return this.ifWin;
     }
     nextLevel() {
-        if (this.player.getPosX() > 0.89 * this.canvas.width - this.player.getWidth() / 2
-            && this.player.getPosY() < 0.59 * this.canvas.height - this.player.getHeight() / 2
-            && this.player.getPosY() > 0.4 * this.canvas.height - this.player.getHeight() / 2
+        if (this.isPlayerInExitGate()
             && this.score >= 0 && this.gameItems.length === 0) {
             this.ifWin = true;
         }
@@ -54,7 +51,7 @@ export default class Level5 extends Level {
             }
             if (this.currentDialogue < dialogues.length) {
                 const filepath = dialogues[this.currentDialogue];
-                CanvasRenderer.drawImage(canvas, CanvasRenderer.loadNewImage(filepath), (this.canvas.width / 2) - 480, (this.canvas.height / 2) - 270);
+                CanvasRenderer.drawImage(canvas, CanvasRenderer.loadNewImage(filepath), (this.canvas.width / 2) - GameConfig.DIALOGUE_OFFSET_X, (this.canvas.height / 2) - GameConfig.DIALOGUE_OFFSET_Y);
             }
             else {
                 super.render(canvas);

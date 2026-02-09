@@ -1,5 +1,7 @@
 import GameItem from '../GameItem.js';
 import CanvasRenderer from '../CanvasRenderer.js';
+import ArenaBounds from '../core/ArenaBounds.js';
+import { ENEMY_ARENA_RATIO } from '../config/ArenaConfig.js';
 export default class FEmail extends GameItem {
     canvas;
     currentImageIndex = 0;
@@ -16,10 +18,11 @@ export default class FEmail extends GameItem {
         this.image = CanvasRenderer.loadNewImage('../assets/FishingMail-Sprite/FMsprite_00.png');
         this.posX = startX;
         this.posY = startY;
-        this.maxX = canvas.width * 0.94;
-        this.maxY = canvas.height * 0.92;
-        this.minX = canvas.width * 0.05;
-        this.minY = canvas.height * 0.1;
+        const bounds = ArenaBounds.fromRatioRect(canvas, ENEMY_ARENA_RATIO);
+        this.maxX = bounds.right;
+        this.maxY = bounds.bottom;
+        this.minX = bounds.left;
+        this.minY = bounds.top;
         this.speedX = Math.random() > 0.5 ? -(0.75 / 2) : (0.75 / 2);
         this.speedY = Math.random() > 0.5 ? -(0.25 / 2) : (0.25 / 2);
         this.timeToChangeImage = 0;

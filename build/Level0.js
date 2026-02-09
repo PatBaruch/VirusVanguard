@@ -3,6 +3,8 @@ import Level from './Level.js';
 import Level1 from './Level1.js';
 import KeyListener from './KeyListener.js';
 import Player from './Player.js';
+import { LEVEL_LAYOUTS } from './config/LevelConfig.js';
+import GameConfig from './config/GameConfig.js';
 export default class Level0 extends Level {
     currentDialogue;
     keyListener;
@@ -15,15 +17,10 @@ export default class Level0 extends Level {
         this.currentDialogue = 0;
         this.player = new Player();
         this.hasStarted = false;
-        this.maxX = 0.73 * this.canvas.width - this.player.getWidth() / 2;
-        this.maxY = 0.7 * this.canvas.height - this.player.getHeight() / 2;
-        this.minX = 0.05 * this.canvas.width;
-        this.minY = 0.22 * this.canvas.height;
+        this.applyLayout(LEVEL_LAYOUTS[0]);
     }
     nextLevel() {
-        if (this.player.getPosX() > 0.72 * this.canvas.width - this.player.getWidth() / 2
-            && this.player.getPosY() < 0.59 * this.canvas.height - this.player.getHeight() / 2
-            && this.player.getPosY() > 0.4 * this.canvas.height - this.player.getHeight() / 2) {
+        if (this.isPlayerInExitGate()) {
             return new Level1(this.canvas, this.playerHealth, this.score);
         }
         return null;
@@ -52,7 +49,7 @@ export default class Level0 extends Level {
             document.body.className = 'level0';
             if (this.currentDialogue < dialogues.length) {
                 const filepath = dialogues[this.currentDialogue];
-                CanvasRenderer.drawImage(canvas, CanvasRenderer.loadNewImage(filepath), (this.canvas.width / 2) - 480, (this.canvas.height / 2) - 270);
+                CanvasRenderer.drawImage(canvas, CanvasRenderer.loadNewImage(filepath), (this.canvas.width / 2) - GameConfig.DIALOGUE_OFFSET_X, (this.canvas.height / 2) - GameConfig.DIALOGUE_OFFSET_Y);
             }
             else {
                 super.render(canvas);

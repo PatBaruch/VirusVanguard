@@ -1,6 +1,7 @@
 import CanvasItem from './CanvasItem.js';
 import CanvasRenderer from './CanvasRenderer.js';
 import GameItem from './GameItem.js';
+import GameConfig from './config/GameConfig.js';
 
 /**
  * Represents a player on the canvas.
@@ -44,29 +45,29 @@ export default class Player extends CanvasItem {
   }
 
   public moveDiagonallyLeftDown(): void {
-    this.posX -= 6 / Math.sqrt(2);
-    this.posY += 6 / Math.sqrt(2);
+    this.posX -= GameConfig.PLAYER_DIAGONAL_SPEED;
+    this.posY += GameConfig.PLAYER_DIAGONAL_SPEED;
     this.image = CanvasRenderer.loadNewImage('./assets/player-SW.png');
     this.playerDirection = 'SW';
   }
 
   public moveDiagonallyLefttUp(): void {
-    this.posX -= 6 / Math.sqrt(2);
-    this.posY -= 6 / Math.sqrt(2);
+    this.posX -= GameConfig.PLAYER_DIAGONAL_SPEED;
+    this.posY -= GameConfig.PLAYER_DIAGONAL_SPEED;
     this.image = CanvasRenderer.loadNewImage('./assets/player-NW.png');
     this.playerDirection = 'NW';
   }
 
   public moveDiagonallyRightDown(): void {
-    this.posX += 6 / Math.sqrt(2);
-    this.posY += 6 / Math.sqrt(2);
+    this.posX += GameConfig.PLAYER_DIAGONAL_SPEED;
+    this.posY += GameConfig.PLAYER_DIAGONAL_SPEED;
     this.image = CanvasRenderer.loadNewImage('./assets/player-SE.png');
     this.playerDirection = 'SE';
   }
 
   public moveDiagonallyRightUp(): void {
-    this.posX += 6 / Math.sqrt(2);
-    this.posY -= 6 / Math.sqrt(2);
+    this.posX += GameConfig.PLAYER_DIAGONAL_SPEED;
+    this.posY -= GameConfig.PLAYER_DIAGONAL_SPEED;
     this.image = CanvasRenderer.loadNewImage('./assets/player-NE.png');
     this.playerDirection = 'NE';
   }
@@ -75,7 +76,7 @@ export default class Player extends CanvasItem {
    * Moves the player downward and updates the direction.
    */
   public moveDown(): void {
-    this.posY += 6;
+    this.posY += GameConfig.PLAYER_CARDINAL_SPEED;
     this.image = CanvasRenderer.loadNewImage('./assets/player-S.png');
     this.playerDirection = 'S';
   }
@@ -84,7 +85,7 @@ export default class Player extends CanvasItem {
    * Moves the player to the left and updates the direction.
    */
   public moveLeft(): void {
-    this.posX -= 6;
+    this.posX -= GameConfig.PLAYER_CARDINAL_SPEED;
     this.image = CanvasRenderer.loadNewImage('./assets/player-W.png');
     this.playerDirection = 'W';
   }
@@ -93,7 +94,7 @@ export default class Player extends CanvasItem {
    * Moves the player to the right and updates the direction.
    */
   public moveRight(): void {
-    this.posX += 6;
+    this.posX += GameConfig.PLAYER_CARDINAL_SPEED;
     this.image = CanvasRenderer.loadNewImage('./assets/player-E.png');
     this.playerDirection = 'E';
   }
@@ -102,7 +103,7 @@ export default class Player extends CanvasItem {
    * Moves the player upward and updates the direction.
    */
   public moveUp(): void {
-    this.posY -= 6;
+    this.posY -= GameConfig.PLAYER_CARDINAL_SPEED;
     this.image = CanvasRenderer.loadNewImage('./assets/player-N.png');
     this.playerDirection = 'N';
   }
