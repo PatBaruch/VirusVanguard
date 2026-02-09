@@ -4,6 +4,8 @@ import Level4 from './Level4.js';
 import KeyListener from './KeyListener.js';
 import CanvasRenderer from './CanvasRenderer.js';
 import Player from './Player.js';
+import { LEVEL_LAYOUTS } from './config/LevelConfig.js';
+import GameConfig from './config/GameConfig.js';
 
 export default class Level3 extends Level {
   private currentDialogue: number;
@@ -18,20 +20,14 @@ export default class Level3 extends Level {
     this.player = new Player();
     this.keyListener = new KeyListener();
     this.hasStarted = false;
-    this.maxX = 0.91 * this.canvas.width - this.player.getWidth() / 2;
-    this.maxY = 0.86 * this.canvas.height - this.player.getHeight() / 2;
-    this.minX = 0.05 * this.canvas.width;
-    this.minY = 0.1 * this.canvas.height;
+    this.applyLayout(LEVEL_LAYOUTS[3]);
   }
 
   /**
    *  @returns Level | null
    */
   public override nextLevel(): Level | null {
-    if (this.player.getPosX() > 0.9 * this.canvas.width - this.player.getWidth() / 2
-      && this.player.getPosY() < 0.59 * this.canvas.height - this.player.getHeight() / 2
-      && this.player.getPosY() > 0.4 * this.canvas.height - this.player.getHeight() / 2
-      && this.score >= 600 && this.gameItems.length === 0) {
+    if (this.isPlayerInExitGate() && this.score >= LEVEL_LAYOUTS[3].scoreGate && this.gameItems.length === 0) {
       return new Level4(this.canvas, this.playerHealth, this.score);
     }
     return null;
@@ -53,10 +49,11 @@ export default class Level3 extends Level {
     }
 
     if (this.currentDialogue < dialogues.length) {
-      const filepath: string = dialogues[this.currentDialogue];
-      CanvasRenderer.drawImage(canvas,
-        CanvasRenderer.loadNewImage(filepath),
-        (this.canvas.width / 2) - 480, (this.canvas.height / 2) - 270);
+        const filepath: string = dialogues[this.currentDialogue];
+        CanvasRenderer.drawImage(canvas,
+          CanvasRenderer.loadNewImage(filepath),
+          (this.canvas.width / 2) - GameConfig.DIALOGUE_OFFSET_X,
+          (this.canvas.height / 2) - GameConfig.DIALOGUE_OFFSET_Y);
     } else {
       // Start the level after the last dialogue
       super.render(canvas);
@@ -65,7 +62,7 @@ export default class Level3 extends Level {
         this.hasStarted = true;
       }
     }
-    if (this.score >= 600 && this.gameItems.length === 0) {
+    if (this.score >= LEVEL_LAYOUTS[3].scoreGate && this.gameItems.length === 0) {
       document.body.className = 'goNextLevel';
     }
   }
@@ -76,14 +73,14 @@ export default class Level3 extends Level {
    */
   public override spawnNextItem(): void {
     this.spawnInterval = setInterval(() => {
-      if (this.score < 600) {
+      if (this.score < LEVEL_LAYOUTS[3].scoreGate) {
         this.gameItems.push(new Worm(this.canvas,
           this.canvas.width * 0.45 + Math.random() * (this.canvas.width * 0.45),
           Math.random() * this.canvas.height * 0.86));
       }
-      if (this.score >= 600) {
-        this.score = 600;
+      if (this.score >= LEVEL_LAYOUTS[3].scoreGate) {
+        this.score = LEVEL_LAYOUTS[3].scoreGate;
       }
-    }, 500);
+    }, LEVEL_LAYOUTS[3].spawnIntervalMs);
   }
 }

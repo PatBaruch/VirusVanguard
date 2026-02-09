@@ -8,6 +8,8 @@ import RVirus from './GameItem/RVirus.js';
 import MrHacker from './GameItem/MrHacker.js';
 import Death from './GameItem/Death.js';
 import EnemyBullet from './GameItem/EnemyBullet.js';
+import GameConfig from './config/GameConfig.js';
+import ArenaBounds from './core/ArenaBounds.js';
 export default class Level {
     duplicateCount = 0;
     enemyCount = 0;
@@ -19,7 +21,7 @@ export default class Level {
     restart = false;
     rvirusStuckToPlayer = false;
     timeSinceStart = 0;
-    timeToSpawnEnemyOnMrHacker = 3000;
+    timeToSpawnEnemyOnMrHacker = GameConfig.BOSS_SUMMON_INTERVAL_MS;
     canvas;
     currentLevel;
     gameItems = [];
@@ -29,6 +31,8 @@ export default class Level {
     maxY;
     minX;
     minY;
+    playArea;
+    exitGate;
     multiplier = 5;
     player;
     playerHealth;
@@ -39,6 +43,35 @@ export default class Level {
         this.canvas = canvas;
         this.playerHealth = playerHealth;
         this.score = score;
+        this.playArea = {
+            left: 0,
+            top: 0,
+            right: canvas.width,
+            bottom: canvas.height,
+        };
+        this.exitGate = {
+            left: canvas.width,
+            top: 0,
+            right: canvas.width,
+            bottom: canvas.height,
+        };
+    }
+    applyLayout(layout) {
+        const playerWidthOffset = this.player.getWidth() / 2;
+        const playerHeightOffset = this.player.getHeight() / 2;
+        this.playArea = ArenaBounds.fromRatioRect(this.canvas, layout.playArea, playerWidthOffset, playerHeightOffset);
+        this.exitGate = ArenaBounds.fromRatioRect(this.canvas, layout.exitGate, playerWidthOffset, playerHeightOffset);
+        this.minX = this.playArea.left;
+        this.minY = this.playArea.top;
+        this.maxX = this.playArea.right;
+        this.maxY = this.playArea.bottom;
+    }
+    isPlayerInExitGate() {
+        const playerX = this.player.getPosX();
+        const playerY = this.player.getPosY();
+        return playerX > this.exitGate.left
+            && playerY > this.exitGate.top
+            && playerY < this.exitGate.bottom;
     }
     startLevel() {
         this.spawnNextItem();
@@ -109,7 +142,7 @@ export default class Level {
     }
     render(canvas) {
         if (this.isLoaded && this.isMrHackerAlive) {
-            CanvasRenderer.drawImage(canvas, this.mrHackerHealthBarImage, this.canvas.width / 2 - 480, this.canvas.height / 2 - 968);
+            CanvasRenderer.drawImage(canvas, this.mrHackerHealthBarImage, this.canvas.width / 2 - GameConfig.BOSS_HEALTHBAR_OFFSET_X, this.canvas.height / 2 - GameConfig.BOSS_HEALTHBAR_OFFSET_Y);
         }
         if (this.playerHealth <= 0) {
             CanvasRenderer.writeText(canvas, 'Game Over', canvas.width / 2, canvas.height / 2, 'center', 'Copperplate', 100, 'Red');
@@ -119,6 +152,7 @@ export default class Level {
         }
         else {
             this.player.render(canvas);
+            CanvasRenderer.drawRectangle(canvas, this.playArea.left, this.playArea.top, this.playArea.right - this.playArea.left, this.playArea.bottom - this.playArea.top, GameConfig.BORDER_COLOR);
             CanvasRenderer.writeText(canvas, `Health: ${this.playerHealth}`, 50, 50, 'left', 'Copperplate', 60, 'white');
             CanvasRenderer.writeText(canvas, `Level: ${this.currentLevel}`, 50, 120, 'left', 'Copperplate', 60, 'Chartreuse');
             this.gameItems.forEach((item) => {
@@ -138,7 +172,7 @@ export default class Level {
         }
     }
     shoot() {
-        const speed = 2;
+        const speed = GameConfig.BULLET_SPEED;
         const playerCenterX = this.player.getPosX() + this.player.getWidth() / 2;
         const playerCenterY = this.player.getPosY() + this.player.getHeight() / 2;
         if (this.currentLevel < 3) {
@@ -325,7 +359,7 @@ export default class Level {
                     else {
                         this.gameItems.push(new Worm(this.canvas, item.getPosX() + 100, item.getPosY() + 30));
                     }
-                    this.timeToSpawnEnemyOnMrHacker = 3000;
+                    this.timeToSpawnEnemyOnMrHacker = GameConfig.BOSS_SUMMON_INTERVAL_MS;
                 }
                 if (item.isTimeToShoot()) {
                     const mrHackerCenterX = item.getPosX() + item.getWidth() / 2;
@@ -387,21 +421,25 @@ export default class Level {
                 else {
                     this.rvirusStuckToPlayer = false;
                     this.levelTimer += elapsed;
-                    if (this.levelTimer >= 1500) {
-                        this.damegePlayer(5);
+                    if (this.levelTimer >= GameConfig.RVIRUS_DOT_INTERVAL_MS) {
+                        this.damegePlayer(GameConfig.RVIRUS_DOT_DAMAGE);
                         this.levelTimer = 0;
                     }
                 }
             }
             if (item instanceof EnemyBullet) {
-                if (item.getPosX() < this.minX * 0.9 || item.getPosX() > this.maxX * 1.05
-                    || item.getPosY() < this.minY * 0.9 || item.getPosY() > this.maxY * 1.05) {
+                if (item.getPosX() < this.minX * GameConfig.BULLET_CULL_MIN_MULTIPLIER
+                    || item.getPosX() > this.maxX * GameConfig.BULLET_CULL_MAX_MULTIPLIER
+                    || item.getPosY() < this.minY * GameConfig.BULLET_CULL_MIN_MULTIPLIER
+                    || item.getPosY() > this.maxY * GameConfig.BULLET_CULL_MAX_MULTIPLIER) {
                     itemsToRemove.push(item);
                 }
             }
             if (item instanceof Bullet) {
-                if (item.getPosX() < this.minX * 0.9 || item.getPosX() > this.maxX * 1.05
-                    || item.getPosY() < this.minY * 0.9 || item.getPosY() > this.maxY * 1.05) {
+                if (item.getPosX() < this.minX * GameConfig.BULLET_CULL_MIN_MULTIPLIER
+                    || item.getPosX() > this.maxX * GameConfig.BULLET_CULL_MAX_MULTIPLIER
+                    || item.getPosY() < this.minY * GameConfig.BULLET_CULL_MIN_MULTIPLIER
+                    || item.getPosY() > this.maxY * GameConfig.BULLET_CULL_MAX_MULTIPLIER) {
                     itemsToRemove.push(item);
                 }
                 for (const otherItem of this.gameItems) {

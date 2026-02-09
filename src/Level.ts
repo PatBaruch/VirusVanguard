@@ -10,6 +10,10 @@ import RVirus from './GameItem/RVirus.js';
 import MrHacker from './GameItem/MrHacker.js';
 import Death from './GameItem/Death.js';
 import EnemyBullet from './GameItem/EnemyBullet.js';
+import GameConfig from './config/GameConfig.js';
+import type { LevelLayoutConfig } from './config/LevelConfig.js';
+import ArenaBounds from './core/ArenaBounds.js';
+import type { Rect } from './types/Geometry.js';
 
 export default abstract class Level {
   private duplicateCount: number = 0;
@@ -32,7 +36,7 @@ export default abstract class Level {
 
   private timeSinceStart: number = 0;
 
-  private timeToSpawnEnemyOnMrHacker: number = 3000;
+  private timeToSpawnEnemyOnMrHacker: number = GameConfig.BOSS_SUMMON_INTERVAL_MS;
 
   protected canvas: HTMLCanvasElement;
 
@@ -52,6 +56,10 @@ export default abstract class Level {
 
   protected minY: number;
 
+  protected playArea: Rect;
+
+  protected exitGate: Rect;
+
   protected multiplier: number = 5;
 
   protected player: Player;
@@ -68,6 +76,45 @@ export default abstract class Level {
     this.canvas = canvas;
     this.playerHealth = playerHealth;
     this.score = score;
+    this.playArea = {
+      left: 0,
+      top: 0,
+      right: canvas.width,
+      bottom: canvas.height,
+    };
+    this.exitGate = {
+      left: canvas.width,
+      top: 0,
+      right: canvas.width,
+      bottom: canvas.height,
+    };
+  }
+
+  protected applyLayout(layout: LevelLayoutConfig): void {
+    const playerWidthOffset: number = this.player.getWidth() / 2;
+    const playerHeightOffset: number = this.player.getHeight() / 2;
+
+    this.playArea = ArenaBounds.fromRatioRect(
+      this.canvas,
+      layout.playArea,
+      playerWidthOffset,
+      playerHeightOffset,
+    );
+    this.exitGate = ArenaBounds.fromRatioRect(this.canvas, layout.exitGate, playerWidthOffset, playerHeightOffset);
+
+    this.minX = this.playArea.left;
+    this.minY = this.playArea.top;
+    this.maxX = this.playArea.right;
+    this.maxY = this.playArea.bottom;
+  }
+
+  protected isPlayerInExitGate(): boolean {
+    const playerX: number = this.player.getPosX();
+    const playerY: number = this.player.getPosY();
+
+    return playerX > this.exitGate.left
+      && playerY > this.exitGate.top
+      && playerY < this.exitGate.bottom;
   }
 
   /**
@@ -166,7 +213,8 @@ export default abstract class Level {
   public render(canvas: HTMLCanvasElement): void {
     if (this.isLoaded && this.isMrHackerAlive) {
       CanvasRenderer.drawImage(canvas, this.mrHackerHealthBarImage,
-        this.canvas.width / 2 - 480, this.canvas.height / 2 - 968);
+        this.canvas.width / 2 - GameConfig.BOSS_HEALTHBAR_OFFSET_X,
+        this.canvas.height / 2 - GameConfig.BOSS_HEALTHBAR_OFFSET_Y);
     }
     if (this.playerHealth <= 0) {
       CanvasRenderer.writeText(canvas, 'Game Over', canvas.width / 2, canvas.height / 2, 'center', 'Copperplate', 100, 'Red');
@@ -175,6 +223,14 @@ export default abstract class Level {
       this.isGameOver = true;
     } else {
       this.player.render(canvas);
+      CanvasRenderer.drawRectangle(
+        canvas,
+        this.playArea.left,
+        this.playArea.top,
+        this.playArea.right - this.playArea.left,
+        this.playArea.bottom - this.playArea.top,
+        GameConfig.BORDER_COLOR,
+      );
       CanvasRenderer.writeText(canvas, `Health: ${this.playerHealth}`, 50, 50, 'left', 'Copperplate', 60, 'white');
       CanvasRenderer.writeText(canvas, `Level: ${this.currentLevel}`, 50, 120, 'left', 'Copperplate', 60, 'Chartreuse');
       this.gameItems.forEach((item: GameItem) => {
@@ -202,7 +258,7 @@ export default abstract class Level {
    * Shoots a bullet from the player's current position and direction.
    */
   public shoot(): void {
-    const speed: number = 2;
+    const speed: number = GameConfig.BULLET_SPEED;
     const playerCenterX: number = this.player.getPosX() + this.player.getWidth() / 2;
     const playerCenterY: number = this.player.getPosY() + this.player.getHeight() / 2;
     if (this.currentLevel < 3) {
@@ -411,7 +467,7 @@ export default abstract class Level {
           } else {
             this.gameItems.push(new Worm(this.canvas, item.getPosX() + 100, item.getPosY() + 30));
           }
-          this.timeToSpawnEnemyOnMrHacker = 3000;
+          this.timeToSpawnEnemyOnMrHacker = GameConfig.BOSS_SUMMON_INTERVAL_MS;
         }
         if (item.isTimeToShoot()) {
           const mrHackerCenterX: number = item.getPosX() + item.getWidth() / 2;
@@ -492,21 +548,25 @@ export default abstract class Level {
         } else {
           this.rvirusStuckToPlayer = false;
           this.levelTimer += elapsed;
-          if (this.levelTimer >= 1500) {
-            this.damegePlayer(5);
+          if (this.levelTimer >= GameConfig.RVIRUS_DOT_INTERVAL_MS) {
+            this.damegePlayer(GameConfig.RVIRUS_DOT_DAMAGE);
             this.levelTimer = 0;
           }
         }
       }
       if (item instanceof EnemyBullet) {
-        if (item.getPosX() < this.minX * 0.9 || item.getPosX() > this.maxX * 1.05
-          || item.getPosY() < this.minY * 0.9 || item.getPosY() > this.maxY * 1.05) {
+        if (item.getPosX() < this.minX * GameConfig.BULLET_CULL_MIN_MULTIPLIER
+          || item.getPosX() > this.maxX * GameConfig.BULLET_CULL_MAX_MULTIPLIER
+          || item.getPosY() < this.minY * GameConfig.BULLET_CULL_MIN_MULTIPLIER
+          || item.getPosY() > this.maxY * GameConfig.BULLET_CULL_MAX_MULTIPLIER) {
           itemsToRemove.push(item);
         }
       }
       if (item instanceof Bullet) {
-        if (item.getPosX() < this.minX * 0.9 || item.getPosX() > this.maxX * 1.05
-          || item.getPosY() < this.minY * 0.9 || item.getPosY() > this.maxY * 1.05) {
+        if (item.getPosX() < this.minX * GameConfig.BULLET_CULL_MIN_MULTIPLIER
+          || item.getPosX() > this.maxX * GameConfig.BULLET_CULL_MAX_MULTIPLIER
+          || item.getPosY() < this.minY * GameConfig.BULLET_CULL_MIN_MULTIPLIER
+          || item.getPosY() > this.maxY * GameConfig.BULLET_CULL_MAX_MULTIPLIER) {
           itemsToRemove.push(item);
         }
 

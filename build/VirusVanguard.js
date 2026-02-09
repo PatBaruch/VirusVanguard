@@ -2,6 +2,8 @@ import Game from './Game.js';
 import CanvasRenderer from './CanvasRenderer.js';
 import KeyListener from './KeyListener.js';
 import Level0 from './Level0.js';
+import GameConfig from './config/GameConfig.js';
+import Viewport from './core/Viewport.js';
 export default class VirusVanguard extends Game {
     canvas;
     currentLevel;
@@ -10,11 +12,23 @@ export default class VirusVanguard extends Game {
     constructor(canvas) {
         super();
         this.canvas = canvas;
-        this.canvas.height = window.innerHeight;
-        this.canvas.width = window.innerWidth;
+        this.canvas.height = GameConfig.VIRTUAL_HEIGHT;
+        this.canvas.width = GameConfig.VIRTUAL_WIDTH;
+        this.updateViewport();
+        window.addEventListener('resize', () => {
+            this.updateViewport();
+        });
         this.keyListener = new KeyListener();
         this.playerHealth = 100;
         this.currentLevel = new Level0(this.canvas, 100, 0);
+    }
+    updateViewport() {
+        const viewport = Viewport.calculate(window.innerWidth, window.innerHeight, GameConfig.VIRTUAL_WIDTH, GameConfig.VIRTUAL_HEIGHT);
+        this.canvas.style.width = `${viewport.renderWidth}px`;
+        this.canvas.style.height = `${viewport.renderHeight}px`;
+        this.canvas.style.position = 'absolute';
+        this.canvas.style.left = `${viewport.offsetX}px`;
+        this.canvas.style.top = `${viewport.offsetY}px`;
     }
     processInput() {
         this.currentLevel.processInput(this.keyListener);

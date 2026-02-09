@@ -1,5 +1,7 @@
 import GameItem from '../GameItem.js';
 import CanvasRenderer from '../CanvasRenderer.js';
+import ArenaBounds from '../core/ArenaBounds.js';
+import { ENEMY_ARENA_RATIO } from '../config/ArenaConfig.js';
 export default class MrHacker extends GameItem {
     canvas;
     changeDir = 0;
@@ -19,10 +21,11 @@ export default class MrHacker extends GameItem {
         this.image = CanvasRenderer.loadNewImage('../assets/Hacker-Sprite/Hacksprite_0.png');
         this.posX = canvas.width * 0.7;
         this.posY = canvas.height * 0.43;
-        this.maxX = canvas.width * 0.94;
-        this.maxY = canvas.height * 0.92;
-        this.minX = canvas.width * 0.05;
-        this.minY = canvas.height * 0.1;
+        const bounds = ArenaBounds.fromRatioRect(canvas, ENEMY_ARENA_RATIO);
+        this.maxX = bounds.right;
+        this.maxY = bounds.bottom;
+        this.minX = bounds.left;
+        this.minY = bounds.top;
         this.speedX = 0;
         this.speedY = -(0.5 / 2);
         this.timeToChangeImage = 0;

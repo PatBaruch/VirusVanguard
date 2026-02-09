@@ -1,5 +1,7 @@
 import GameItem from '../GameItem.js';
 import CanvasRenderer from '../CanvasRenderer.js';
+import ArenaBounds from '../core/ArenaBounds.js';
+import { ENEMY_ARENA_RATIO } from '../config/ArenaConfig.js';
 export default class RVirus extends GameItem {
     canvas;
     currentImageIndex = 0;
@@ -21,10 +23,11 @@ export default class RVirus extends GameItem {
         this.image = CanvasRenderer.loadNewImage('../assets/Resident-Sprite/Rsprite_0.png');
         this.posX = startX;
         this.posY = startY;
-        this.maxX = canvas.width * 0.94;
-        this.maxY = canvas.height * 0.92;
-        this.minX = canvas.width * 0.05;
-        this.minY = canvas.height * 0.1;
+        const bounds = ArenaBounds.fromRatioRect(canvas, ENEMY_ARENA_RATIO);
+        this.maxX = bounds.right;
+        this.maxY = bounds.bottom;
+        this.minX = bounds.left;
+        this.minY = bounds.top;
         this.startspeedX = -(1.2 / 2);
         this.startspeedY = -(0.4 / 2);
         this.speedX = Math.random() > 0.5 ? (1 / 2) : -(1 / 2);
