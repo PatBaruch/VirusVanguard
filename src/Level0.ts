@@ -3,35 +3,29 @@ import Level from './Level.js';
 import Level1 from './Level1.js';
 import KeyListener from './KeyListener.js';
 import Player from './Player.js';
+import { LEVEL_LAYOUTS } from './config/LevelConfig.js';
+import GameConfig from './config/GameConfig.js';
 
 export default class Level0 extends Level {
   private currentDialogue: number;
-
-  private keyListener: KeyListener;
 
   private startScreenSkipped: boolean = false;
 
   public constructor(canvas: HTMLCanvasElement, helth: number, score: number){
     super(canvas, helth, score);
     document.body.className = 'startScreen';
-    this.keyListener = new KeyListener();
     this.currentLevel = 0;
     this.currentDialogue = 0;
     this.player = new Player();
     this.hasStarted = false;
-    this.maxX = 0.73 * this.canvas.width - this.player.getWidth() / 2;
-    this.maxY = 0.7 * this.canvas.height - this.player.getHeight() / 2;
-    this.minX = 0.05 * this.canvas.width;
-    this.minY = 0.22 * this.canvas.height;
+    this.applyLayout(LEVEL_LAYOUTS[0]);
   }
 
   /**
    *  @returns Level | null
    */
   public override nextLevel(): Level | null {
-    if (this.player.getPosX() > 0.72 * this.canvas.width - this.player.getWidth() / 2
-    && this.player.getPosY() < 0.59 * this.canvas.height - this.player.getHeight() / 2
-    && this.player.getPosY() > 0.4 * this.canvas.height - this.player.getHeight() / 2) {
+    if (this.isPlayerInExitGate()) {
       return new Level1(this.canvas, this.playerHealth, this.score,);
     }
     return null;
@@ -43,16 +37,16 @@ export default class Level0 extends Level {
    */
   public override render(canvas: HTMLCanvasElement): void {
     const dialogues: string[] = [
-      '../assets/Dialogue-Level0/Level0-0.png',
-      '../assets/Dialogue-Level0/Level0-1.png',
-      '../assets/Dialogue-Level0/Level0-2.png',
-      '../assets/Dialogue-Level0/Level0-3.png',
-      '../assets/Dialogue-Level0/Level0-4.png',
-      '../assets/Dialogue-Level0/Level0-5.png',
-      '../assets/Dialogue-Level0/Level0-6.png',
+      './assets/Dialogue-Level0/Level0-0.png',
+      './assets/Dialogue-Level0/Level0-1.png',
+      './assets/Dialogue-Level0/Level0-2.png',
+      './assets/Dialogue-Level0/Level0-3.png',
+      './assets/Dialogue-Level0/Level0-4.png',
+      './assets/Dialogue-Level0/Level0-5.png',
+      './assets/Dialogue-Level0/Level0-6.png',
     ];
 
-    if (this.keyListener.keyPressed(KeyListener.KEY_SPACE)) {
+    if (this.inputKeyListener !== null && this.inputKeyListener.keyPressed(KeyListener.KEY_SPACE)) {
       this.startScreenSkipped = true;
       if (this.startScreenSkipped) {
         this.currentDialogue += 1;
@@ -67,7 +61,8 @@ export default class Level0 extends Level {
         const filepath: string = dialogues[this.currentDialogue];
         CanvasRenderer.drawImage(canvas,
           CanvasRenderer.loadNewImage(filepath),
-          (this.canvas.width / 2) - 480, (this.canvas.height / 2) - 270);
+          (this.canvas.width / 2) - GameConfig.DIALOGUE_OFFSET_X,
+          (this.canvas.height / 2) - GameConfig.DIALOGUE_OFFSET_Y);
       } else {
       // Start the level after the last dialogue
         super.render(canvas);

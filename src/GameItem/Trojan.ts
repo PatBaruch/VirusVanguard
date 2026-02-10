@@ -1,5 +1,7 @@
 import GameItem from '../GameItem.js';
 import CanvasRenderer from '../CanvasRenderer.js';
+import ArenaBounds from '../core/ArenaBounds.js';
+import { ENEMY_ARENA_RATIO } from '../config/ArenaConfig.js';
 
 
 export default class Trojan extends GameItem {
@@ -21,13 +23,14 @@ export default class Trojan extends GameItem {
   public constructor(canvas: HTMLCanvasElement) {
     super();
     this.canvas = canvas;
-    this.image = CanvasRenderer.loadNewImage('../assets/Trojan-Sprite/Hsprite_0.png');
+    this.image = CanvasRenderer.loadNewImage('./assets/Trojan-Sprite/Hsprite_0.png');
     this.posX = canvas.width * 0.89;
     this.posY = Math.random() * canvas.height * 0.76 + canvas.height * 0.1;
-    this.maxX = canvas.width * 0.94;
-    this.maxY = canvas.height * 0.92;
-    this.minX = canvas.width * 0.05;
-    this.minY = canvas.height * 0.1;
+    const bounds = ArenaBounds.fromRatioRect(canvas, ENEMY_ARENA_RATIO);
+    this.maxX = bounds.right;
+    this.maxY = bounds.bottom;
+    this.minX = bounds.left;
+    this.minY = bounds.top;
     this.speedX = Math.random() > 0.7 ? -(0.4 / 2): -(0.4 / 2) * 0.7;
     this.timeToChangeImage = 0;
     this.damage = 5;
@@ -48,8 +51,8 @@ export default class Trojan extends GameItem {
    */
   public override update(elapsed: number): void {
     const images: string[] = [
-      '../assets/Trojan-Sprite/Hsprite_0.png',
-      '../assets/Trojan-Sprite/Hsprite_1.png',
+      './assets/Trojan-Sprite/Hsprite_0.png',
+      './assets/Trojan-Sprite/Hsprite_1.png',
     ];
     if (this.timeToChangeImage <= 0) {
       this.timeToChangeImage = 150;

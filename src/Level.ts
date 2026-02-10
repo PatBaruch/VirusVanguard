@@ -10,6 +10,19 @@ import RVirus from './GameItem/RVirus.js';
 import MrHacker from './GameItem/MrHacker.js';
 import Death from './GameItem/Death.js';
 import EnemyBullet from './GameItem/EnemyBullet.js';
+import GameConfig from './config/GameConfig.js';
+import type { LevelLayoutConfig } from './config/LevelConfig.js';
+import { LEVEL_LAYOUTS } from './config/LevelConfig.js';
+import ArenaBounds from './core/ArenaBounds.js';
+import RunManager from './core/RunManager.js';
+import type { Rect } from './types/Geometry.js';
+
+interface ScorePopup {
+  text: string;
+  x: number;
+  y: number;
+  ttl: number;
+}
 
 export default abstract class Level {
   private duplicateCount: number = 0;
@@ -28,11 +41,19 @@ export default abstract class Level {
 
   private restart: boolean = false;
 
+  private fireCooldownRemaining: number = 0;
+
   private rvirusStuckToPlayer: boolean = false;
+
+  private damageFlashTimer: number = 0;
+
+  private rvirusDamageTimer: number = 0;
 
   private timeSinceStart: number = 0;
 
-  private timeToSpawnEnemyOnMrHacker: number = 3000;
+  private scorePopups: ScorePopup[] = [];
+
+  private timeToSpawnEnemyOnMrHacker: number = GameConfig.BOSS_SUMMON_INTERVAL_MS;
 
   protected canvas: HTMLCanvasElement;
 
@@ -44,6 +65,8 @@ export default abstract class Level {
 
   protected ifWin: boolean = false;
 
+  protected inputKeyListener: KeyListener | null = null;
+
   protected maxX: number;
 
   protected maxY: number;
@@ -51,6 +74,10 @@ export default abstract class Level {
   protected minX: number;
 
   protected minY: number;
+
+  protected playArea: Rect;
+
+  protected exitGate: Rect;
 
   protected multiplier: number = 5;
 
@@ -68,6 +95,51 @@ export default abstract class Level {
     this.canvas = canvas;
     this.playerHealth = playerHealth;
     this.score = score;
+    this.playArea = {
+      left: 0,
+      top: 0,
+      right: canvas.width,
+      bottom: canvas.height,
+    };
+    this.exitGate = {
+      left: canvas.width,
+      top: 0,
+      right: canvas.width,
+      bottom: canvas.height,
+    };
+  }
+
+  protected applyLayout(layout: LevelLayoutConfig): void {
+    const playerWidthOffset: number = this.player.getWidth() / 2;
+    const playerHeightOffset: number = this.player.getHeight() / 2;
+
+    this.playArea = ArenaBounds.fromRatioRect(
+      this.canvas,
+      layout.playArea,
+      playerWidthOffset,
+      playerHeightOffset,
+    );
+    const exitGateBounds: Rect = ArenaBounds.fromRatioRect(this.canvas, layout.exitGate);
+    this.exitGate = {
+      left: exitGateBounds.left - playerWidthOffset,
+      top: exitGateBounds.top - playerHeightOffset,
+      right: exitGateBounds.right - playerWidthOffset,
+      bottom: exitGateBounds.bottom - playerHeightOffset,
+    };
+
+    this.minX = this.playArea.left;
+    this.minY = this.playArea.top;
+    this.maxX = this.playArea.right;
+    this.maxY = this.playArea.bottom;
+  }
+
+  protected isPlayerInExitGate(): boolean {
+    const playerX: number = this.player.getPosX();
+    const playerY: number = this.player.getPosY();
+
+    return playerX > this.exitGate.left
+      && playerY > this.exitGate.top
+      && playerY < this.exitGate.bottom;
   }
 
   /**
@@ -77,12 +149,21 @@ export default abstract class Level {
     this.spawnNextItem();
   }
 
+  public onEnter(): void {
+    // default no-op
+  }
+
+  public onExit(): void {
+    // default no-op
+  }
+
   /**
    * Chartreuseuces the health of the player by the specified amount of damage.
    * @param damage damage taken by player
    */
   public damegePlayer(damage: number): void {
-    this.playerHealth -= damage;
+    this.playerHealth -= damage * RunManager.getDamageTakenMultiplier();
+    this.damageFlashTimer = GameConfig.DAMAGE_FLASH_DURATION_MS;
   }
 
   /**
@@ -91,6 +172,14 @@ export default abstract class Level {
    */
   public getPlayerHealth(): number {
     return this.playerHealth;
+  }
+
+  public getScore(): number {
+    return this.score;
+  }
+
+  public getFinalScore(): number {
+    return Math.round(this.score * this.multiplier);
   }
 
   /**
@@ -108,6 +197,8 @@ export default abstract class Level {
    * @param keyListener key that is pressed
    */
   public processInput(keyListener: KeyListener): void {
+    this.inputKeyListener = keyListener;
+
     if ((this.isGameOver && keyListener.keyPressed(KeyListener.KEY_SPACE))) {
       this.restart = true;
       this.restartGame();
@@ -142,8 +233,11 @@ export default abstract class Level {
       } else if (keyListener.isKeyDown(KeyListener.KEY_D) && this.player.getPosX() < this.maxX) {
         this.player.moveRight();
       }
-      if (keyListener.keyPressed(KeyListener.KEY_SPACE) && this.currentLevel !== 0) {
+      if (this.currentLevel !== 0
+        && keyListener.isKeyDown(KeyListener.KEY_SPACE)
+        && this.fireCooldownRemaining <= 0) {
         this.shoot();
+        this.fireCooldownRemaining = GameConfig.PLAYER_FIRE_COOLDOWN_MS * RunManager.getFireCooldownMultiplier();
       }
     }
   }
@@ -166,7 +260,8 @@ export default abstract class Level {
   public render(canvas: HTMLCanvasElement): void {
     if (this.isLoaded && this.isMrHackerAlive) {
       CanvasRenderer.drawImage(canvas, this.mrHackerHealthBarImage,
-        this.canvas.width / 2 - 480, this.canvas.height / 2 - 968);
+        this.canvas.width / 2 - GameConfig.BOSS_HEALTHBAR_OFFSET_X,
+        this.canvas.height / 2 - GameConfig.BOSS_HEALTHBAR_OFFSET_Y);
     }
     if (this.playerHealth <= 0) {
       CanvasRenderer.writeText(canvas, 'Game Over', canvas.width / 2, canvas.height / 2, 'center', 'Copperplate', 100, 'Red');
@@ -175,12 +270,57 @@ export default abstract class Level {
       this.isGameOver = true;
     } else {
       this.player.render(canvas);
+      CanvasRenderer.drawRectangle(
+        canvas,
+        this.playArea.left,
+        this.playArea.top,
+        this.playArea.right - this.playArea.left,
+        this.playArea.bottom - this.playArea.top,
+        GameConfig.BORDER_COLOR,
+      );
       CanvasRenderer.writeText(canvas, `Health: ${this.playerHealth}`, 50, 50, 'left', 'Copperplate', 60, 'white');
       CanvasRenderer.writeText(canvas, `Level: ${this.currentLevel}`, 50, 120, 'left', 'Copperplate', 60, 'Chartreuse');
+      const scoreGate: number = this.getCurrentScoreGate();
+      if (scoreGate > 0) {
+        CanvasRenderer.writeText(
+          canvas,
+          `Objective: ${Math.min(this.score, scoreGate)} / ${scoreGate}`,
+          50,
+          190,
+          'left',
+          'Copperplate',
+          40,
+          GameConfig.OBJECTIVE_TEXT_COLOR,
+        );
+      }
       this.gameItems.forEach((item: GameItem) => {
         item.render(canvas);
       }
       );
+
+      this.scorePopups.forEach((popup: ScorePopup) => {
+        CanvasRenderer.writeText(
+          canvas,
+          popup.text,
+          popup.x,
+          popup.y,
+          'center',
+          'Copperplate',
+          30,
+          'Chartreuse',
+        );
+      });
+
+      if (this.damageFlashTimer > 0) {
+        CanvasRenderer.fillRectangle(
+          canvas,
+          this.playArea.left,
+          this.playArea.top,
+          this.playArea.right - this.playArea.left,
+          this.playArea.bottom - this.playArea.top,
+          GameConfig.DAMAGE_FLASH_COLOR,
+        );
+      }
     }
   }
 
@@ -202,7 +342,7 @@ export default abstract class Level {
    * Shoots a bullet from the player's current position and direction.
    */
   public shoot(): void {
-    const speed: number = 2;
+    const speed: number = GameConfig.BULLET_SPEED;
     const playerCenterX: number = this.player.getPosX() + this.player.getWidth() / 2;
     const playerCenterY: number = this.player.getPosY() + this.player.getHeight() / 2;
     if (this.currentLevel < 3) {
@@ -327,8 +467,21 @@ export default abstract class Level {
   public update(elapsed: number): void {
     const itemsToRemove: GameItem[] = [];
 
+    this.fireCooldownRemaining = Math.max(0, this.fireCooldownRemaining - elapsed);
+    this.damageFlashTimer = Math.max(0, this.damageFlashTimer - elapsed);
+    this.scorePopups = this.scorePopups
+      .map((popup: ScorePopup) => ({
+        ...popup,
+        ttl: popup.ttl - elapsed,
+        y: popup.y - GameConfig.SCORE_POPUP_SPEED_PER_MS * elapsed,
+      }))
+      .filter((popup: ScorePopup) => popup.ttl > 0);
+
     if (!(this.isGameOver || this.isGameWon())) {
-      this.multiplier *= 0.9999;
+      this.multiplier *= Math.pow(
+        GameConfig.MULTIPLIER_DECAY_PER_SECOND * RunManager.getMultiplierDecayMultiplier(),
+        elapsed / 1000,
+      );
     }
 
     this.levelTimer += elapsed;
@@ -367,32 +520,32 @@ export default abstract class Level {
     this.gameItems.forEach((item: GameItem) => {
       if (this.currentLevel === 5 && item instanceof MrHacker) {
         const images: string[] = [
-          '../assets/BossBar_Sprite/bossbar_00.png',
-          '../assets/BossBar_Sprite/bossbar_01.png',
-          '../assets/BossBar_Sprite/bossbar_02.png',
-          '../assets/BossBar_Sprite/bossbar_03.png',
-          '../assets/BossBar_Sprite/bossbar_04.png',
-          '../assets/BossBar_Sprite/bossbar_05.png',
-          '../assets/BossBar_Sprite/bossbar_06.png',
-          '../assets/BossBar_Sprite/bossbar_07.png',
-          '../assets/BossBar_Sprite/bossbar_08.png',
-          '../assets/BossBar_Sprite/bossbar_09.png',
-          '../assets/BossBar_Sprite/bossbar_10.png',
-          '../assets/BossBar_Sprite/bossbar_11.png',
-          '../assets/BossBar_Sprite/bossbar_12.png',
-          '../assets/BossBar_Sprite/bossbar_13.png',
-          '../assets/BossBar_Sprite/bossbar_14.png',
-          '../assets/BossBar_Sprite/bossbar_15.png',
-          '../assets/BossBar_Sprite/bossbar_16.png',
-          '../assets/BossBar_Sprite/bossbar_17.png',
-          '../assets/BossBar_Sprite/bossbar_18.png',
-          '../assets/BossBar_Sprite/bossbar_19.png',
-          '../assets/BossBar_Sprite/bossbar_20.png',
-          '../assets/BossBar_Sprite/bossbar_21.png',
-          '../assets/BossBar_Sprite/bossbar_22.png',
-          '../assets/BossBar_Sprite/bossbar_23.png',
-          '../assets/BossBar_Sprite/bossbar_24.png',
-          '../assets/BossBar_Sprite/bossbar_25.png',
+          './assets/BossBar_Sprite/bossbar_00.png',
+          './assets/BossBar_Sprite/bossbar_01.png',
+          './assets/BossBar_Sprite/bossbar_02.png',
+          './assets/BossBar_Sprite/bossbar_03.png',
+          './assets/BossBar_Sprite/bossbar_04.png',
+          './assets/BossBar_Sprite/bossbar_05.png',
+          './assets/BossBar_Sprite/bossbar_06.png',
+          './assets/BossBar_Sprite/bossbar_07.png',
+          './assets/BossBar_Sprite/bossbar_08.png',
+          './assets/BossBar_Sprite/bossbar_09.png',
+          './assets/BossBar_Sprite/bossbar_10.png',
+          './assets/BossBar_Sprite/bossbar_11.png',
+          './assets/BossBar_Sprite/bossbar_12.png',
+          './assets/BossBar_Sprite/bossbar_13.png',
+          './assets/BossBar_Sprite/bossbar_14.png',
+          './assets/BossBar_Sprite/bossbar_15.png',
+          './assets/BossBar_Sprite/bossbar_16.png',
+          './assets/BossBar_Sprite/bossbar_17.png',
+          './assets/BossBar_Sprite/bossbar_18.png',
+          './assets/BossBar_Sprite/bossbar_19.png',
+          './assets/BossBar_Sprite/bossbar_20.png',
+          './assets/BossBar_Sprite/bossbar_21.png',
+          './assets/BossBar_Sprite/bossbar_22.png',
+          './assets/BossBar_Sprite/bossbar_23.png',
+          './assets/BossBar_Sprite/bossbar_24.png',
+          './assets/BossBar_Sprite/bossbar_25.png',
         ];
         this.mrHackerHealthBarImage = CanvasRenderer.loadNewImage(images[item.getHealthPoints()]);
         this.isLoaded = true;
@@ -411,7 +564,7 @@ export default abstract class Level {
           } else {
             this.gameItems.push(new Worm(this.canvas, item.getPosX() + 100, item.getPosY() + 30));
           }
-          this.timeToSpawnEnemyOnMrHacker = 3000;
+          this.timeToSpawnEnemyOnMrHacker = this.getBossSummonInterval(item.getHealthPoints());
         }
         if (item.isTimeToShoot()) {
           const mrHackerCenterX: number = item.getPosX() + item.getWidth() / 2;
@@ -428,10 +581,11 @@ export default abstract class Level {
             direction = deltaY > 0 ? 'S' : 'N';
           }
 
-          const angle: number = 10 + Math.random() * 45;
+          const phaseRange: { min: number; max: number; speed: number } = this.getBossShotPhase(item.getHealthPoints());
+          const angle: number = phaseRange.min + Math.random() * (phaseRange.max - phaseRange.min);
           // Angle in degrees (negative for left direction)
           const angleInRadians: number = (angle * Math.PI) / 180; // Convert angle to radians
-          const speed: number = 1; // Constant speed of the bullet
+          const speed: number = phaseRange.speed;
           const velocityX: number = Math.cos(angleInRadians) * speed;
           // Calculate the x component of velocity
           const velocityY: number = Math.sin(angleInRadians) * speed;
@@ -489,24 +643,29 @@ export default abstract class Level {
         if (!this.rvirusStuckToPlayer && item.getHealthPoints() > 0) {
           item.setFollowingPlayer(this.player);
           this.rvirusStuckToPlayer = true;
+          this.rvirusDamageTimer = 0;
         } else {
           this.rvirusStuckToPlayer = false;
-          this.levelTimer += elapsed;
-          if (this.levelTimer >= 1500) {
-            this.damegePlayer(5);
-            this.levelTimer = 0;
+          this.rvirusDamageTimer += elapsed;
+          if (this.rvirusDamageTimer >= GameConfig.RVIRUS_DOT_INTERVAL_MS) {
+            this.damegePlayer(GameConfig.RVIRUS_DOT_DAMAGE);
+            this.rvirusDamageTimer = 0;
           }
         }
       }
       if (item instanceof EnemyBullet) {
-        if (item.getPosX() < this.minX * 0.9 || item.getPosX() > this.maxX * 1.05
-          || item.getPosY() < this.minY * 0.9 || item.getPosY() > this.maxY * 1.05) {
+        if (item.getPosX() < this.minX * GameConfig.BULLET_CULL_MIN_MULTIPLIER
+          || item.getPosX() > this.maxX * GameConfig.BULLET_CULL_MAX_MULTIPLIER
+          || item.getPosY() < this.minY * GameConfig.BULLET_CULL_MIN_MULTIPLIER
+          || item.getPosY() > this.maxY * GameConfig.BULLET_CULL_MAX_MULTIPLIER) {
           itemsToRemove.push(item);
         }
       }
       if (item instanceof Bullet) {
-        if (item.getPosX() < this.minX * 0.9 || item.getPosX() > this.maxX * 1.05
-          || item.getPosY() < this.minY * 0.9 || item.getPosY() > this.maxY * 1.05) {
+        if (item.getPosX() < this.minX * GameConfig.BULLET_CULL_MIN_MULTIPLIER
+          || item.getPosX() > this.maxX * GameConfig.BULLET_CULL_MAX_MULTIPLIER
+          || item.getPosY() < this.minY * GameConfig.BULLET_CULL_MIN_MULTIPLIER
+          || item.getPosY() > this.maxY * GameConfig.BULLET_CULL_MAX_MULTIPLIER) {
           itemsToRemove.push(item);
         }
 
@@ -527,6 +686,12 @@ export default abstract class Level {
             } else {
               itemsToRemove.push(item, otherItem);
               this.score += otherItem.getScore();
+              this.scorePopups.push({
+                text: `+${otherItem.getScore()}`,
+                x: otherItem.getPosX(),
+                y: otherItem.getPosY(),
+                ttl: GameConfig.SCORE_POPUP_DURATION_MS,
+              });
             }
           }
           if (otherItem instanceof Trojan && item.isBulletColidingWithItem(otherItem)) {
@@ -553,5 +718,48 @@ export default abstract class Level {
     this.gameItems.forEach((item: GameItem) => {
       item.update(elapsed);
     });
+  }
+
+  private getCurrentScoreGate(): number {
+    const levelLayout: LevelLayoutConfig | undefined = LEVEL_LAYOUTS[this.currentLevel];
+    if (levelLayout === undefined) {
+      return 0;
+    }
+
+    return levelLayout.scoreGate;
+  }
+
+  private getBossSummonInterval(healthPoints: number): number {
+    if (healthPoints <= 8) {
+      return 1800;
+    }
+    if (healthPoints <= 16) {
+      return 2400;
+    }
+    return GameConfig.BOSS_SUMMON_INTERVAL_MS;
+  }
+
+  private getBossShotPhase(healthPoints: number): { min: number; max: number; speed: number } {
+    if (healthPoints <= 8) {
+      return {
+        min: 20,
+        max: 65,
+        speed: 1.4,
+      };
+    }
+
+    if (healthPoints <= 16) {
+      return {
+        min: 15,
+        max: 55,
+        speed: 1.2,
+      };
+    }
+
+    return {
+      min: 10,
+      max: 45,
+      speed: 1,
+    };
   }
 }

@@ -1,4 +1,5 @@
 export default class CanvasRenderer {
+    static imageCache = new Map();
     static getCanvasContext(canvas) {
         const ctx = canvas.getContext('2d');
         if (ctx === null) {
@@ -50,9 +51,14 @@ export default class CanvasRenderer {
         ctx.fill();
     }
     static loadNewImage(source) {
-        const img = new Image();
-        img.src = source;
-        return img;
+        const cachedImage = CanvasRenderer.imageCache.get(source);
+        if (cachedImage !== undefined) {
+            return cachedImage;
+        }
+        const image = new Image();
+        image.src = source;
+        CanvasRenderer.imageCache.set(source, image);
+        return image;
     }
     static writeText(canvas, text, xCoordinate, yCoordinate, alignment = 'center', fontFamily = 'sans-serif', fontSize = 20, color = 'red') {
         const ctx = CanvasRenderer.getCanvasContext(canvas);

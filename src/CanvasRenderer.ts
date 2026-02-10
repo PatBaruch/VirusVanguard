@@ -6,6 +6,8 @@
  */
 
 export default class CanvasRenderer {
+  private static readonly imageCache: Map<string, HTMLImageElement> = new Map<string, HTMLImageElement>();
+
   /**
    * @param canvas the canvas on which will be drawn
    * @returns the 2D rendering context of the canvas
@@ -163,9 +165,15 @@ export default class CanvasRenderer {
    * @returns the image
    */
   public static loadNewImage(source: string): HTMLImageElement {
-    const img: HTMLImageElement = new Image();
-    img.src = source;
-    return img;
+    const cachedImage: HTMLImageElement | undefined = CanvasRenderer.imageCache.get(source);
+    if (cachedImage !== undefined) {
+      return cachedImage;
+    }
+
+    const image: HTMLImageElement = new Image();
+    image.src = source;
+    CanvasRenderer.imageCache.set(source, image);
+    return image;
   }
 
   /**

@@ -1,5 +1,7 @@
 import GameItem from '../GameItem.js';
 import CanvasRenderer from '../CanvasRenderer.js';
+import ArenaBounds from '../core/ArenaBounds.js';
+import { ENEMY_ARENA_RATIO } from '../config/ArenaConfig.js';
 
 
 export default class Worm extends GameItem {
@@ -21,13 +23,14 @@ export default class Worm extends GameItem {
   public constructor(canvas: HTMLCanvasElement, posX: number, posY: number) {
     super();
     this.canvas = canvas;
-    this.image = CanvasRenderer.loadNewImage('../assets/Worm-Sprite/Wsprite_0.png');
+    this.image = CanvasRenderer.loadNewImage('./assets/Worm-Sprite/Wsprite_0.png');
     this.posX = posX;
     this.posY = posY;
-    this.maxX = canvas.width * 0.94;
-    this.maxY = canvas.height * 0.92;
-    this.minX = canvas.width * 0.05;
-    this.minY = canvas.height * 0.1;
+    const bounds = ArenaBounds.fromRatioRect(canvas, ENEMY_ARENA_RATIO);
+    this.maxX = bounds.right;
+    this.maxY = bounds.bottom;
+    this.minX = bounds.left;
+    this.minY = bounds.top;
     this.speedX = -0.4 * Math.random() - 0.3;
     this.speedY = -0.2 * Math.random() - 0.3;
 
@@ -50,13 +53,13 @@ export default class Worm extends GameItem {
    */
   public override update(elapsed: number): void {
     const images: string[] = [
-      '../assets/Worm-Sprite/Wsprite_0.png',
-      '../assets/Worm-Sprite/Wsprite_1.png',
-      '../assets/Worm-Sprite/Wsprite_2.png',
-      '../assets/Worm-Sprite/Wsprite_3.png',
-      '../assets/Worm-Sprite/Wsprite_4.png',
-      '../assets/Worm-Sprite/Wsprite_5.png',
-      '../assets/Worm-Sprite/Wsprite_6.png',
+      './assets/Worm-Sprite/Wsprite_0.png',
+      './assets/Worm-Sprite/Wsprite_1.png',
+      './assets/Worm-Sprite/Wsprite_2.png',
+      './assets/Worm-Sprite/Wsprite_3.png',
+      './assets/Worm-Sprite/Wsprite_4.png',
+      './assets/Worm-Sprite/Wsprite_5.png',
+      './assets/Worm-Sprite/Wsprite_6.png',
     ];
     if (this.timeToChangeImage <= 0) {
       this.timeToChangeImage = 150;

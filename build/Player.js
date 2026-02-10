@@ -1,10 +1,11 @@
 import CanvasItem from './CanvasItem.js';
 import CanvasRenderer from './CanvasRenderer.js';
+import GameConfig from './config/GameConfig.js';
 export default class Player extends CanvasItem {
     playerDirection;
     constructor() {
         super();
-        this.image = CanvasRenderer.loadNewImage('/assets/player-E.png');
+        this.image = CanvasRenderer.loadNewImage('./assets/player-E.png');
         this.posX = 180;
         this.posY = 490;
         this.playerDirection = 'E';
@@ -29,46 +30,46 @@ export default class Player extends CanvasItem {
         return false;
     }
     moveDiagonallyLeftDown() {
-        this.posX -= 6 / Math.sqrt(2);
-        this.posY += 6 / Math.sqrt(2);
+        this.posX -= GameConfig.PLAYER_DIAGONAL_SPEED;
+        this.posY += GameConfig.PLAYER_DIAGONAL_SPEED;
         this.image = CanvasRenderer.loadNewImage('./assets/player-SW.png');
         this.playerDirection = 'SW';
     }
     moveDiagonallyLefttUp() {
-        this.posX -= 6 / Math.sqrt(2);
-        this.posY -= 6 / Math.sqrt(2);
+        this.posX -= GameConfig.PLAYER_DIAGONAL_SPEED;
+        this.posY -= GameConfig.PLAYER_DIAGONAL_SPEED;
         this.image = CanvasRenderer.loadNewImage('./assets/player-NW.png');
         this.playerDirection = 'NW';
     }
     moveDiagonallyRightDown() {
-        this.posX += 6 / Math.sqrt(2);
-        this.posY += 6 / Math.sqrt(2);
+        this.posX += GameConfig.PLAYER_DIAGONAL_SPEED;
+        this.posY += GameConfig.PLAYER_DIAGONAL_SPEED;
         this.image = CanvasRenderer.loadNewImage('./assets/player-SE.png');
         this.playerDirection = 'SE';
     }
     moveDiagonallyRightUp() {
-        this.posX += 6 / Math.sqrt(2);
-        this.posY -= 6 / Math.sqrt(2);
+        this.posX += GameConfig.PLAYER_DIAGONAL_SPEED;
+        this.posY -= GameConfig.PLAYER_DIAGONAL_SPEED;
         this.image = CanvasRenderer.loadNewImage('./assets/player-NE.png');
         this.playerDirection = 'NE';
     }
     moveDown() {
-        this.posY += 6;
+        this.posY += GameConfig.PLAYER_CARDINAL_SPEED;
         this.image = CanvasRenderer.loadNewImage('./assets/player-S.png');
         this.playerDirection = 'S';
     }
     moveLeft() {
-        this.posX -= 6;
+        this.posX -= GameConfig.PLAYER_CARDINAL_SPEED;
         this.image = CanvasRenderer.loadNewImage('./assets/player-W.png');
         this.playerDirection = 'W';
     }
     moveRight() {
-        this.posX += 6;
+        this.posX += GameConfig.PLAYER_CARDINAL_SPEED;
         this.image = CanvasRenderer.loadNewImage('./assets/player-E.png');
         this.playerDirection = 'E';
     }
     moveUp() {
-        this.posY -= 6;
+        this.posY -= GameConfig.PLAYER_CARDINAL_SPEED;
         this.image = CanvasRenderer.loadNewImage('./assets/player-N.png');
         this.playerDirection = 'N';
     }
