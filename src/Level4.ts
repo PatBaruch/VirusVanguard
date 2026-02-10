@@ -46,8 +46,8 @@ export default class Level4 extends Level {
    */
   public override render(canvas: HTMLCanvasElement): void {
     const dialogues: string[] = [
-      '../assets/Dialogue-Level4/Level4-0.png',
-      '../assets/Dialogue-Level4/Level4-1.png',
+      './assets/Dialogue-Level4/Level4-0.png',
+      './assets/Dialogue-Level4/Level4-1.png',
     ];
 
     if (this.inputKeyListener !== null && this.inputKeyListener.keyPressed(KeyListener.KEY_SPACE)) {

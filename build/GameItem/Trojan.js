@@ -15,7 +15,7 @@ export default class Trojan extends GameItem {
     constructor(canvas) {
         super();
         this.canvas = canvas;
-        this.image = CanvasRenderer.loadNewImage('../assets/Trojan-Sprite/Hsprite_0.png');
+        this.image = CanvasRenderer.loadNewImage('./assets/Trojan-Sprite/Hsprite_0.png');
         this.posX = canvas.width * 0.89;
         this.posY = Math.random() * canvas.height * 0.76 + canvas.height * 0.1;
         const bounds = ArenaBounds.fromRatioRect(canvas, ENEMY_ARENA_RATIO);
@@ -33,8 +33,8 @@ export default class Trojan extends GameItem {
     }
     update(elapsed) {
         const images = [
-            '../assets/Trojan-Sprite/Hsprite_0.png',
-            '../assets/Trojan-Sprite/Hsprite_1.png',
+            './assets/Trojan-Sprite/Hsprite_0.png',
+            './assets/Trojan-Sprite/Hsprite_1.png',
         ];
         if (this.timeToChangeImage <= 0) {
             this.timeToChangeImage = 150;

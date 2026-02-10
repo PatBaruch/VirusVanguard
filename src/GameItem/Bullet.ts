@@ -18,7 +18,7 @@ export default class Bullet extends GameItem {
     startY: number, speedX: number, speedY: number) {
     super();
     this.canvas = canvas;
-    this.image = CanvasRenderer.loadNewImage( '../assets/Bullet-Sprite/PBsprite_0.png');
+    this.image = CanvasRenderer.loadNewImage( './assets/Bullet-Sprite/PBsprite_0.png');
     this.posX = startX - this.image.width / 2;
     this.posY = startY - this.image.height / 2;
     const bounds = ArenaBounds.fromRatioRect(canvas, ENEMY_ARENA_RATIO);
@@ -68,11 +68,11 @@ export default class Bullet extends GameItem {
    */
   public override update(elapsed: number): void {
     const images: string[] = [
-      '../assets/Bullet-Sprite/PBsprite_0.png',
-      '../assets/Bullet-Sprite/PBsprite_1.png',
-      '../assets/Bullet-Sprite/PBsprite_2.png',
-      '../assets/Bullet-Sprite/PBsprite_3.png',
-      '../assets/Bullet-Sprite/PBsprite_4.png',
+      './assets/Bullet-Sprite/PBsprite_0.png',
+      './assets/Bullet-Sprite/PBsprite_1.png',
+      './assets/Bullet-Sprite/PBsprite_2.png',
+      './assets/Bullet-Sprite/PBsprite_3.png',
+      './assets/Bullet-Sprite/PBsprite_4.png',
     ];
     if (this.timeToChangeImage <= 0) {
       this.timeToChangeImage = 75;

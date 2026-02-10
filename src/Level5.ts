@@ -73,9 +73,9 @@ export default class Level5 extends Level {
       CanvasRenderer.writeText(canvas, 'Press Space to Restart', canvas.width / 2, canvas.height / 2 + 300, 'center', 'Copperplate', 50, 'Chartreuse');
     } else {
       const dialogues: string[] = [
-        '../assets/Dialogue-Level5/Level5-0.png',
-        '../assets/Dialogue-Level5/Level5-1.png',
-        '../assets/Dialogue-Level5/Level5-2.png',
+        './assets/Dialogue-Level5/Level5-0.png',
+        './assets/Dialogue-Level5/Level5-1.png',
+        './assets/Dialogue-Level5/Level5-2.png',
       ];
 
       if (this.inputKeyListener !== null && this.inputKeyListener.keyPressed(KeyListener.KEY_SPACE)) {

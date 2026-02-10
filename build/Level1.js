@@ -33,8 +33,8 @@ export default class Level1 extends Level {
     }
     render(canvas) {
         const dialogues = [
-            '../assets/Dialogue-Level1/Level1-0.png',
-            '../assets/Dialogue-Level1/Level1-1.png',
+            './assets/Dialogue-Level1/Level1-0.png',
+            './assets/Dialogue-Level1/Level1-1.png',
         ];
         if (this.inputKeyListener !== null && this.inputKeyListener.keyPressed(KeyListener.KEY_SPACE)) {
             this.currentDialogue += 1;

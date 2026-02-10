@@ -20,7 +20,7 @@ export default class RVirus extends GameItem {
     constructor(canvas, startX, startY) {
         super();
         this.canvas = canvas;
-        this.image = CanvasRenderer.loadNewImage('../assets/Resident-Sprite/Rsprite_0.png');
+        this.image = CanvasRenderer.loadNewImage('./assets/Resident-Sprite/Rsprite_0.png');
         this.posX = startX;
         this.posY = startY;
         const bounds = ArenaBounds.fromRatioRect(canvas, ENEMY_ARENA_RATIO);
@@ -60,9 +60,9 @@ export default class RVirus extends GameItem {
     }
     update(elapsed) {
         const images = [
-            '../assets/Resident-Sprite/Rsprite_0.png',
-            '../assets/Resident-Sprite/Rsprite_1.png',
-            '../assets/Resident-Sprite/Rsprite_2.png',
+            './assets/Resident-Sprite/Rsprite_0.png',
+            './assets/Resident-Sprite/Rsprite_1.png',
+            './assets/Resident-Sprite/Rsprite_2.png',
         ];
         if (this.timeToChangeImage <= 0) {
             this.timeToChangeImage = 150;

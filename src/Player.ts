@@ -15,7 +15,7 @@ export default class Player extends CanvasItem {
    */
   public constructor() {
     super();
-    this.image = CanvasRenderer.loadNewImage('/assets/player-E.png');
+    this.image = CanvasRenderer.loadNewImage('./assets/player-E.png');
     this.posX = 180;
     this.posY = 490;
     this.playerDirection = 'E';

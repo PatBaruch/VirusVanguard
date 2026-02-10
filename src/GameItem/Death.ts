@@ -28,7 +28,7 @@ export default class Death extends GameItem {
     super();
     this.level = level;
     this.canvas = canvas;
-    this.image = CanvasRenderer.loadNewImage('../assets/Death-Sprite/DeathSprite_0.png');
+    this.image = CanvasRenderer.loadNewImage('./assets/Death-Sprite/DeathSprite_0.png');
     this.posX = startX;
     this.posY = startY;
     const bounds = ArenaBounds.fromRatioRect(canvas, ENEMY_ARENA_RATIO);
@@ -61,10 +61,10 @@ export default class Death extends GameItem {
    */
   public override update(elapsed: number): void {
     this.images = [
-      '../assets/Death-Sprite/DeathSprite_0.png',
-      '../assets/Death-Sprite/DeathSprite_1.png',
-      '../assets/Death-Sprite/DeathSprite_2.png',
-      '../assets/Death-Sprite/DeathSprite_3.png',
+      './assets/Death-Sprite/DeathSprite_0.png',
+      './assets/Death-Sprite/DeathSprite_1.png',
+      './assets/Death-Sprite/DeathSprite_2.png',
+      './assets/Death-Sprite/DeathSprite_3.png',
     ];
     if (this.timeToChangeImage <= 0) {
       if (this.currentImageIndex >= this.images.length) {

@@ -54,9 +54,9 @@ export default class Level5 extends Level {
         }
         else {
             const dialogues = [
-                '../assets/Dialogue-Level5/Level5-0.png',
-                '../assets/Dialogue-Level5/Level5-1.png',
-                '../assets/Dialogue-Level5/Level5-2.png',
+                './assets/Dialogue-Level5/Level5-0.png',
+                './assets/Dialogue-Level5/Level5-1.png',
+                './assets/Dialogue-Level5/Level5-2.png',
             ];
             if (this.inputKeyListener !== null && this.inputKeyListener.keyPressed(KeyListener.KEY_SPACE)) {
                 this.currentDialogue += 1;

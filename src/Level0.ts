@@ -37,13 +37,13 @@ export default class Level0 extends Level {
    */
   public override render(canvas: HTMLCanvasElement): void {
     const dialogues: string[] = [
-      '../assets/Dialogue-Level0/Level0-0.png',
-      '../assets/Dialogue-Level0/Level0-1.png',
-      '../assets/Dialogue-Level0/Level0-2.png',
-      '../assets/Dialogue-Level0/Level0-3.png',
-      '../assets/Dialogue-Level0/Level0-4.png',
-      '../assets/Dialogue-Level0/Level0-5.png',
-      '../assets/Dialogue-Level0/Level0-6.png',
+      './assets/Dialogue-Level0/Level0-0.png',
+      './assets/Dialogue-Level0/Level0-1.png',
+      './assets/Dialogue-Level0/Level0-2.png',
+      './assets/Dialogue-Level0/Level0-3.png',
+      './assets/Dialogue-Level0/Level0-4.png',
+      './assets/Dialogue-Level0/Level0-5.png',
+      './assets/Dialogue-Level0/Level0-6.png',
     ];
 
     if (this.inputKeyListener !== null && this.inputKeyListener.keyPressed(KeyListener.KEY_SPACE)) {

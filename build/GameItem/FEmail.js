@@ -15,7 +15,7 @@ export default class FEmail extends GameItem {
     constructor(canvas, startX, startY) {
         super();
         this.canvas = canvas;
-        this.image = CanvasRenderer.loadNewImage('../assets/FishingMail-Sprite/FMsprite_00.png');
+        this.image = CanvasRenderer.loadNewImage('./assets/FishingMail-Sprite/FMsprite_00.png');
         this.posX = startX;
         this.posY = startY;
         const bounds = ArenaBounds.fromRatioRect(canvas, ENEMY_ARENA_RATIO);
@@ -34,20 +34,20 @@ export default class FEmail extends GameItem {
     }
     update(elapsed) {
         const images = [
-            '../assets/FishingMail-Sprite/FMsprite_00.png',
-            '../assets/FishingMail-Sprite/FMsprite_01.png',
-            '../assets/FishingMail-Sprite/FMsprite_02.png',
-            '../assets/FishingMail-Sprite/FMsprite_03.png',
-            '../assets/FishingMail-Sprite/FMsprite_04.png',
-            '../assets/FishingMail-Sprite/FMsprite_05.png',
-            '../assets/FishingMail-Sprite/FMsprite_06.png',
-            '../assets/FishingMail-Sprite/FMsprite_07.png',
-            '../assets/FishingMail-Sprite/FMsprite_08.png',
-            '../assets/FishingMail-Sprite/FMsprite_09.png',
-            '../assets/FishingMail-Sprite/FMsprite_10.png',
-            '../assets/FishingMail-Sprite/FMsprite_11.png',
-            '../assets/FishingMail-Sprite/FMsprite_12.png',
-            '../assets/FishingMail-Sprite/FMsprite_13.png',
+            './assets/FishingMail-Sprite/FMsprite_00.png',
+            './assets/FishingMail-Sprite/FMsprite_01.png',
+            './assets/FishingMail-Sprite/FMsprite_02.png',
+            './assets/FishingMail-Sprite/FMsprite_03.png',
+            './assets/FishingMail-Sprite/FMsprite_04.png',
+            './assets/FishingMail-Sprite/FMsprite_05.png',
+            './assets/FishingMail-Sprite/FMsprite_06.png',
+            './assets/FishingMail-Sprite/FMsprite_07.png',
+            './assets/FishingMail-Sprite/FMsprite_08.png',
+            './assets/FishingMail-Sprite/FMsprite_09.png',
+            './assets/FishingMail-Sprite/FMsprite_10.png',
+            './assets/FishingMail-Sprite/FMsprite_11.png',
+            './assets/FishingMail-Sprite/FMsprite_12.png',
+            './assets/FishingMail-Sprite/FMsprite_13.png',
         ];
         if (this.timeToChangeImage <= 0) {
             if (this.currentImageIndex >= images.length) {

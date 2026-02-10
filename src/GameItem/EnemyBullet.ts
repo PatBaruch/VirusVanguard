@@ -33,7 +33,7 @@ export default class EnemyBullet extends GameItem {
     startY: number, speedX: number, speedY: number,) {
     super();
     this.canvas = canvas;
-    this.image = CanvasRenderer.loadNewImage('../assets/HBullet_Sprite/HBsprite_1.png');
+    this.image = CanvasRenderer.loadNewImage('./assets/HBullet_Sprite/HBsprite_1.png');
     this.posX = startX - this.image.width / 2;
     this.posY = startY - this.image.height / 2;
     const bounds = ArenaBounds.fromRatioRect(canvas, ENEMY_ARENA_RATIO);
@@ -53,10 +53,10 @@ export default class EnemyBullet extends GameItem {
 
   public override update(elapsed: number): void {
     const images: string[] = [
-      '../assets/HBullet_Sprite/HBsprite_1.png',
-      '../assets/HBullet_Sprite/HBsprite_2.png',
-      '../assets/HBullet_Sprite/HBsprite_3.png',
-      '../assets/HBullet_Sprite/HBsprite_4.png',
+      './assets/HBullet_Sprite/HBsprite_1.png',
+      './assets/HBullet_Sprite/HBsprite_2.png',
+      './assets/HBullet_Sprite/HBsprite_3.png',
+      './assets/HBullet_Sprite/HBsprite_4.png',
     ];
     if (this.timeToChangeImage <= 0) {
       this.timeToChangeImage = 75;

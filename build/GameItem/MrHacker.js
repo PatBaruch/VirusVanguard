@@ -18,7 +18,7 @@ export default class MrHacker extends GameItem {
     constructor(canvas) {
         super();
         this.canvas = canvas;
-        this.image = CanvasRenderer.loadNewImage('../assets/Hacker-Sprite/Hacksprite_0.png');
+        this.image = CanvasRenderer.loadNewImage('./assets/Hacker-Sprite/Hacksprite_0.png');
         this.posX = canvas.width * 0.7;
         this.posY = canvas.height * 0.43;
         const bounds = ArenaBounds.fromRatioRect(canvas, ENEMY_ARENA_RATIO);
@@ -54,9 +54,9 @@ export default class MrHacker extends GameItem {
     }
     update(elapsed) {
         const images = [
-            '../assets/Hacker-Sprite/Hacksprite_0.png',
-            '../assets/Hacker-Sprite/Hacksprite_1.png',
-            '../assets/Hacker-Sprite/Hacksprite_2.png',
+            './assets/Hacker-Sprite/Hacksprite_0.png',
+            './assets/Hacker-Sprite/Hacksprite_1.png',
+            './assets/Hacker-Sprite/Hacksprite_2.png',
         ];
         if (this.timeToChangeImage <= 0) {
             this.timeToChangeImage = 150;
