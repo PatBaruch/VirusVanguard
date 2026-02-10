@@ -1,5 +1,4 @@
 import Game from './Game.js';
-import CanvasRenderer from './CanvasRenderer.js';
 import KeyListener from './KeyListener.js';
 import Level0 from './Level0.js';
 import Level1 from './Level1.js';
@@ -7,12 +6,14 @@ import GameConfig from './config/GameConfig.js';
 import Viewport from './core/Viewport.js';
 import RunManager from './core/RunManager.js';
 import Persistence from './core/Persistence.js';
+import CanvasGameRenderer from './render/CanvasGameRenderer.js';
 export default class VirusVanguard extends Game {
     canvas;
     currentLevel;
     keyListener;
     playerHealth;
     transitionFadeTimer = 0;
+    renderer;
     persistedStats;
     scoreAttackRemainingMs = 0;
     scoreAttackFinished = false;
@@ -21,6 +22,7 @@ export default class VirusVanguard extends Game {
         this.canvas = canvas;
         this.canvas.height = GameConfig.VIRTUAL_HEIGHT;
         this.canvas.width = GameConfig.VIRTUAL_WIDTH;
+        this.renderer = new CanvasGameRenderer();
         RunManager.initializeFromUrl();
         RunManager.applySeededRandom();
         this.updateViewport();
@@ -55,20 +57,20 @@ export default class VirusVanguard extends Game {
         this.currentLevel.processInput(this.keyListener);
     }
     render() {
-        CanvasRenderer.clearCanvas(this.canvas);
+        this.renderer.clear(this.canvas);
         this.currentLevel.render(this.canvas);
         const runState = RunManager.getRunState();
         if (runState.mode === 'score-attack') {
-            CanvasRenderer.writeText(this.canvas, `Score Attack ${(this.scoreAttackRemainingMs / 1000).toFixed(1)}s`, this.canvas.width - 20, 50, 'right', 'Copperplate', 36, 'orange');
+            this.renderer.drawText(this.canvas, `Score Attack ${(this.scoreAttackRemainingMs / 1000).toFixed(1)}s`, this.canvas.width - 20, 50, 'right', 'Copperplate', 36, 'orange');
         }
-        CanvasRenderer.writeText(this.canvas, `Best: ${this.persistedStats.bestFinalScore}`, this.canvas.width - 20, 95, 'right', 'Copperplate', 28, 'white');
-        CanvasRenderer.writeText(this.canvas, `Medals: ${this.persistedStats.unlockedMedals.length}`, this.canvas.width - 20, 130, 'right', 'Copperplate', 24, 'Chartreuse');
+        this.renderer.drawText(this.canvas, `Best: ${this.persistedStats.bestFinalScore}`, this.canvas.width - 20, 95, 'right', 'Copperplate', 28, 'white');
+        this.renderer.drawText(this.canvas, `Medals: ${this.persistedStats.unlockedMedals.length}`, this.canvas.width - 20, 130, 'right', 'Copperplate', 24, 'Chartreuse');
         if (this.scoreAttackFinished) {
-            CanvasRenderer.writeText(this.canvas, 'Score Attack Complete', this.canvas.width / 2, this.canvas.height / 2, 'center', 'Copperplate', 70, 'Gold');
+            this.renderer.drawText(this.canvas, 'Score Attack Complete', this.canvas.width / 2, this.canvas.height / 2, 'center', 'Copperplate', 70, 'Gold');
         }
         if (this.transitionFadeTimer > 0) {
             const alpha = this.transitionFadeTimer / GameConfig.TRANSITION_FADE_DURATION_MS;
-            CanvasRenderer.fillRectangle(this.canvas, 0, 0, this.canvas.width, this.canvas.height, `rgba(0, 0, 0, ${alpha})`);
+            this.renderer.drawOverlay(this.canvas, `rgba(0, 0, 0, ${alpha})`);
         }
         if (this.currentLevel.restartGame() === true) {
             this.currentLevel.onExit();

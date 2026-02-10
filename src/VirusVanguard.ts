@@ -1,5 +1,4 @@
 import Game from './Game.js';
-import CanvasRenderer from './CanvasRenderer.js';
 import KeyListener from './KeyListener.js';
 import Level0 from './Level0.js';
 import Level from './Level.js';
@@ -8,6 +7,8 @@ import GameConfig from './config/GameConfig.js';
 import Viewport from './core/Viewport.js';
 import RunManager from './core/RunManager.js';
 import Persistence, { type PersistedStats } from './core/Persistence.js';
+import type Renderer from './render/Renderer.js';
+import CanvasGameRenderer from './render/CanvasGameRenderer.js';
 
 export default class VirusVanguard extends Game {
   private canvas: HTMLCanvasElement;
@@ -19,6 +20,8 @@ export default class VirusVanguard extends Game {
   private playerHealth: number;
 
   private transitionFadeTimer: number = 0;
+
+  private renderer: Renderer;
 
   private persistedStats: PersistedStats;
 
@@ -36,6 +39,7 @@ export default class VirusVanguard extends Game {
     this.canvas = canvas;
     this.canvas.height = GameConfig.VIRTUAL_HEIGHT;
     this.canvas.width = GameConfig.VIRTUAL_WIDTH;
+    this.renderer = new CanvasGameRenderer();
     RunManager.initializeFromUrl();
     RunManager.applySeededRandom();
 
@@ -90,11 +94,11 @@ export default class VirusVanguard extends Game {
    * Render all the elements in the screen. Called from GameLoop
    */
   public render(): void {
-    CanvasRenderer.clearCanvas(this.canvas);
+    this.renderer.clear(this.canvas);
     this.currentLevel.render(this.canvas);
     const runState = RunManager.getRunState();
     if (runState.mode === 'score-attack') {
-      CanvasRenderer.writeText(
+      this.renderer.drawText(
         this.canvas,
         `Score Attack ${(this.scoreAttackRemainingMs / 1000).toFixed(1)}s`,
         this.canvas.width - 20,
@@ -106,7 +110,7 @@ export default class VirusVanguard extends Game {
       );
     }
 
-    CanvasRenderer.writeText(
+    this.renderer.drawText(
       this.canvas,
       `Best: ${this.persistedStats.bestFinalScore}`,
       this.canvas.width - 20,
@@ -117,7 +121,7 @@ export default class VirusVanguard extends Game {
       'white',
     );
 
-    CanvasRenderer.writeText(
+    this.renderer.drawText(
       this.canvas,
       `Medals: ${this.persistedStats.unlockedMedals.length}`,
       this.canvas.width - 20,
@@ -129,7 +133,7 @@ export default class VirusVanguard extends Game {
     );
 
     if (this.scoreAttackFinished) {
-      CanvasRenderer.writeText(
+      this.renderer.drawText(
         this.canvas,
         'Score Attack Complete',
         this.canvas.width / 2,
@@ -143,7 +147,7 @@ export default class VirusVanguard extends Game {
 
     if (this.transitionFadeTimer > 0) {
       const alpha: number = this.transitionFadeTimer / GameConfig.TRANSITION_FADE_DURATION_MS;
-      CanvasRenderer.fillRectangle(this.canvas, 0, 0, this.canvas.width, this.canvas.height, `rgba(0, 0, 0, ${alpha})`);
+      this.renderer.drawOverlay(this.canvas, `rgba(0, 0, 0, ${alpha})`);
     }
     if (this.currentLevel.restartGame() === true) {
       this.currentLevel.onExit();
