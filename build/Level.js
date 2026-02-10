@@ -22,8 +22,10 @@ export default class Level {
     restart = false;
     fireCooldownRemaining = 0;
     rvirusStuckToPlayer = false;
+    damageFlashTimer = 0;
     rvirusDamageTimer = 0;
     timeSinceStart = 0;
+    scorePopups = [];
     timeToSpawnEnemyOnMrHacker = GameConfig.BOSS_SUMMON_INTERVAL_MS;
     canvas;
     currentLevel;
@@ -86,6 +88,7 @@ export default class Level {
     }
     damegePlayer(damage) {
         this.playerHealth -= damage;
+        this.damageFlashTimer = GameConfig.DAMAGE_FLASH_DURATION_MS;
     }
     getPlayerHealth() {
         return this.playerHealth;
@@ -174,6 +177,12 @@ export default class Level {
             this.gameItems.forEach((item) => {
                 item.render(canvas);
             });
+            this.scorePopups.forEach((popup) => {
+                CanvasRenderer.writeText(canvas, popup.text, popup.x, popup.y, 'center', 'Copperplate', 30, 'Chartreuse');
+            });
+            if (this.damageFlashTimer > 0) {
+                CanvasRenderer.fillRectangle(canvas, this.playArea.left, this.playArea.top, this.playArea.right - this.playArea.left, this.playArea.bottom - this.playArea.top, GameConfig.DAMAGE_FLASH_COLOR);
+            }
         }
     }
     restartGame() {
@@ -297,6 +306,14 @@ export default class Level {
     update(elapsed) {
         const itemsToRemove = [];
         this.fireCooldownRemaining = Math.max(0, this.fireCooldownRemaining - elapsed);
+        this.damageFlashTimer = Math.max(0, this.damageFlashTimer - elapsed);
+        this.scorePopups = this.scorePopups
+            .map((popup) => ({
+            ...popup,
+            ttl: popup.ttl - elapsed,
+            y: popup.y - GameConfig.SCORE_POPUP_SPEED_PER_MS * elapsed,
+        }))
+            .filter((popup) => popup.ttl > 0);
         if (!(this.isGameOver || this.isGameWon())) {
             this.multiplier *= Math.pow(GameConfig.MULTIPLIER_DECAY_PER_SECOND, elapsed / 1000);
         }
@@ -479,6 +496,12 @@ export default class Level {
                         else {
                             itemsToRemove.push(item, otherItem);
                             this.score += otherItem.getScore();
+                            this.scorePopups.push({
+                                text: `+${otherItem.getScore()}`,
+                                x: otherItem.getPosX(),
+                                y: otherItem.getPosY(),
+                                ttl: GameConfig.SCORE_POPUP_DURATION_MS,
+                            });
                         }
                     }
                     if (otherItem instanceof Trojan && item.isBulletColidingWithItem(otherItem)) {

@@ -35,4 +35,14 @@ export default class GameConfig {
   public static readonly BORDER_COLOR: string = 'rgba(80, 255, 160, 0.65)';
 
   public static readonly OBJECTIVE_TEXT_COLOR: string = 'gold';
+
+  public static readonly DAMAGE_FLASH_DURATION_MS: number = 180;
+
+  public static readonly DAMAGE_FLASH_COLOR: string = 'rgba(255, 40, 40, 0.22)';
+
+  public static readonly SCORE_POPUP_DURATION_MS: number = 650;
+
+  public static readonly SCORE_POPUP_SPEED_PER_MS: number = 0.05;
+
+  public static readonly TRANSITION_FADE_DURATION_MS: number = 320;
 }
