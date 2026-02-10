@@ -8,7 +8,9 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "watch": "tsc --watch "
+    "watch": "tsc --watch ",
+    "test": "npm run build && node --test tests/**/*.test.js",
+    "test:single": "npm run build && node --test"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^6.11",

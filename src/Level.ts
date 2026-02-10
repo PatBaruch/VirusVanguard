@@ -16,13 +16,11 @@ import { LEVEL_LAYOUTS } from './config/LevelConfig.js';
 import ArenaBounds from './core/ArenaBounds.js';
 import RunManager from './core/RunManager.js';
 import type { Rect } from './types/Geometry.js';
-
-interface ScorePopup {
-  text: string;
-  x: number;
-  y: number;
-  ttl: number;
-}
+import PlayerMovementSystem from './level/systems/PlayerMovementSystem.js';
+import PlayerWeaponSystem from './level/systems/PlayerWeaponSystem.js';
+import BossPhaseSystem from './level/systems/BossPhaseSystem.js';
+import TransientUiSystem, { type ScorePopup } from './level/systems/TransientUiSystem.js';
+import WormDuplicationSystem from './level/systems/WormDuplicationSystem.js';
 
 export default abstract class Level {
   private duplicateCount: number = 0;
@@ -209,30 +207,13 @@ export default abstract class Level {
       this.restart = false;
     }
     if (this.hasStarted) {
-      if (keyListener.isKeyDown(KeyListener.KEY_W) && keyListener.isKeyDown(KeyListener.KEY_D)
-        && this.player.getPosY() > this.minY && this.player.getPosX() < this.maxX) {
-        this.player.moveDiagonallyRightUp();
-      } else if (keyListener.isKeyDown(KeyListener.KEY_S)
-        && keyListener.isKeyDown(KeyListener.KEY_D)
-        && this.player.getPosY() < this.maxY && this.player.getPosX() < this.maxX) {
-        this.player.moveDiagonallyRightDown();
-      } else if (keyListener.isKeyDown(KeyListener.KEY_W)
-        && keyListener.isKeyDown(KeyListener.KEY_A)
-        && this.player.getPosY() > this.minY && this.player.getPosX() > this.minX) {
-        this.player.moveDiagonallyLefttUp();
-      } else if (keyListener.isKeyDown(KeyListener.KEY_S)
-        && keyListener.isKeyDown(KeyListener.KEY_A)
-        && this.player.getPosY() < this.maxY && this.player.getPosX() > this.minX) {
-        this.player.moveDiagonallyLeftDown();
-      } else if (keyListener.isKeyDown(KeyListener.KEY_W) && this.player.getPosY() > this.minY) {
-        this.player.moveUp();
-      } else if (keyListener.isKeyDown(KeyListener.KEY_A) && this.player.getPosX() > this.minX) {
-        this.player.moveLeft();
-      } else if (keyListener.isKeyDown(KeyListener.KEY_S) && this.player.getPosY() < this.maxY) {
-        this.player.moveDown();
-      } else if (keyListener.isKeyDown(KeyListener.KEY_D) && this.player.getPosX() < this.maxX) {
-        this.player.moveRight();
-      }
+      PlayerMovementSystem.processMovement(this.player, keyListener, {
+        minX: this.minX,
+        maxX: this.maxX,
+        minY: this.minY,
+        maxY: this.maxY,
+      });
+
       if (this.currentLevel !== 0
         && keyListener.isKeyDown(KeyListener.KEY_SPACE)
         && this.fireCooldownRemaining <= 0) {
@@ -345,117 +326,21 @@ export default abstract class Level {
     const speed: number = GameConfig.BULLET_SPEED;
     const playerCenterX: number = this.player.getPosX() + this.player.getWidth() / 2;
     const playerCenterY: number = this.player.getPosY() + this.player.getHeight() / 2;
-    if (this.currentLevel < 3) {
-      if (this.player.getDirection() === 'E') {
-        this.gameItems.push(new Bullet(this.canvas,
-          playerCenterX, playerCenterY, speed, 0));
-      } else if (this.player.getDirection() === 'W') {
-        this.gameItems.push(new Bullet(this.canvas,
-          playerCenterX, playerCenterY, -speed, 0));
-      } else if (this.player.getDirection() === 'N') {
-        this.gameItems.push(new Bullet(this.canvas,
-          playerCenterX, playerCenterY, 0, -speed));
-      } else if (this.player.getDirection() === 'S') {
-        this.gameItems.push(new Bullet(this.canvas,
-          playerCenterX, playerCenterY, 0, speed));
-      } else if (this.player.getDirection() === 'NE') {
-        this.gameItems.push(new Bullet(this.canvas,
-          playerCenterX, playerCenterY, speed / Math.sqrt(2), -speed / Math.sqrt(2)));
-      } else if (this.player.getDirection() === 'SE') {
-        this.gameItems.push(new Bullet(this.canvas,
-          playerCenterX, playerCenterY, speed / Math.sqrt(2), speed / Math.sqrt(2)));
-      } else if (this.player.getDirection() === 'NW') {
-        this.gameItems.push(new Bullet(this.canvas,
-          playerCenterX, playerCenterY, -speed / Math.sqrt(2), -speed / Math.sqrt(2)));
-      } else if (this.player.getDirection() === 'SW') {
-        this.gameItems.push(new Bullet(this.canvas,
-          playerCenterX, playerCenterY, -speed / Math.sqrt(2), speed / Math.sqrt(2)));
-      }
-    } else if (this.currentLevel >= 4){
-      if (this.player.getDirection() === 'E') {
-        this.gameItems.push(new Bullet(this.canvas,
-          playerCenterX + 10, playerCenterY + 10, speed, 1));
-        this.gameItems.push(new Bullet(this.canvas,
-          playerCenterX + 10, playerCenterY + 10, speed, -1));
-        this.gameItems.push(new Bullet(this.canvas, playerCenterX, playerCenterY, speed, 0));
-      } else if (this.player.getDirection() === 'W') {
-        this.gameItems.push(new Bullet(this.canvas, playerCenterX, playerCenterY, -speed, 1));
-        this.gameItems.push(new Bullet(this.canvas, playerCenterX, playerCenterY, -speed, -1));
-        this.gameItems.push(new Bullet(this.canvas, playerCenterX, playerCenterY, -speed, 0));
-      } else if (this.player.getDirection() === 'N') {
-        this.gameItems.push(new Bullet(this.canvas, playerCenterX, playerCenterY, 1, -speed));
-        this.gameItems.push(new Bullet(this.canvas, playerCenterX, playerCenterY, -1, -speed));
-        this.gameItems.push(new Bullet(this.canvas, playerCenterX, playerCenterY, 0, -speed));
-      } else if (this.player.getDirection() === 'S') {
-        this.gameItems.push(new Bullet(this.canvas, playerCenterX, playerCenterY, 1, speed));
-        this.gameItems.push(new Bullet(this.canvas, playerCenterX, playerCenterY, -1, speed));
-        this.gameItems.push(new Bullet(this.canvas, playerCenterX, playerCenterY, 0, speed));
-      } else if (this.player.getDirection() === 'NE') {
-        this.gameItems.push(new Bullet(this.canvas, playerCenterX,
-          playerCenterY, speed / Math.sqrt(2), -speed / Math.sqrt(2)));
-        this.gameItems.push(new Bullet(this.canvas, playerCenterX,
-          playerCenterY, speed / Math.sqrt(2), -speed / Math.sqrt(2) + 1));
-        this.gameItems.push(new Bullet(this.canvas, playerCenterX,
-          playerCenterY, speed / Math.sqrt(2), -speed / Math.sqrt(2) - 1));
-      } else if (this.player.getDirection() === 'SE') {
-        this.gameItems.push(new Bullet(this.canvas, playerCenterX,
-          playerCenterY, speed / Math.sqrt(2), speed / Math.sqrt(2)));
-        this.gameItems.push(new Bullet(this.canvas, playerCenterX,
-          playerCenterY, speed / Math.sqrt(2) - 1, speed / Math.sqrt(2)));
-        this.gameItems.push(new Bullet(this.canvas, playerCenterX,
-          playerCenterY, speed / Math.sqrt(2) + 1, speed / Math.sqrt(2)));
-      } else if (this.player.getDirection() === 'NW') {
-        this.gameItems.push(new Bullet(this.canvas, playerCenterX,
-          playerCenterY, -speed / Math.sqrt(2), -speed / Math.sqrt(2)));
-        this.gameItems.push(new Bullet(this.canvas, playerCenterX,
-          playerCenterY, -speed / Math.sqrt(2) + 1, -speed / Math.sqrt(2)));
-        this.gameItems.push(new Bullet(this.canvas, playerCenterX,
-          playerCenterY, -speed / Math.sqrt(2) - 1, -speed / Math.sqrt(2)));
-      } else if (this.player.getDirection() === 'SW') {
-        this.gameItems.push(new Bullet(this.canvas, playerCenterX,
-          playerCenterY, -speed / Math.sqrt(2), speed / Math.sqrt(2)));
-        this.gameItems.push(new Bullet(this.canvas, playerCenterX,
-          playerCenterY, -speed / Math.sqrt(2) + 1, speed / Math.sqrt(2)));
-        this.gameItems.push(new Bullet(this.canvas, playerCenterX,
-          playerCenterY, -speed / Math.sqrt(2) - 1, speed / Math.sqrt(2)));
-      }
-    } else if (this.currentLevel >= 3 && this.currentLevel < 4 ) {
-      if (this.player.getDirection() === 'E') {
-        this.gameItems.push(new Bullet(this.canvas,
-          playerCenterX + 10, playerCenterY + 15, speed, 0));
-        this.gameItems.push(new Bullet(this.canvas,
-          playerCenterX + 10, playerCenterY - 15, speed, 0));
-      } else if (this.player.getDirection() === 'W') {
-        this.gameItems.push(new Bullet(this.canvas, playerCenterX, playerCenterY + 15, -speed, 0));
-        this.gameItems.push(new Bullet(this.canvas, playerCenterX, playerCenterY - 15, -speed, 0));
-      } else if (this.player.getDirection() === 'N') {
-        this.gameItems.push(new Bullet(this.canvas, playerCenterX + 15, playerCenterY, 0, -speed));
-        this.gameItems.push(new Bullet(this.canvas, playerCenterX - 15, playerCenterY, 0, -speed));
-      } else if (this.player.getDirection() === 'S') {
-        this.gameItems.push(new Bullet(this.canvas, playerCenterX + 15, playerCenterY, 0, speed));
-        this.gameItems.push(new Bullet(this.canvas, playerCenterX - 15, playerCenterY, 0, speed));
-      } else if (this.player.getDirection() === 'NE') {
-        this.gameItems.push(new Bullet(this.canvas, playerCenterX,
-          playerCenterY, speed / Math.sqrt(2), -speed / Math.sqrt(2)));
-        this.gameItems.push(new Bullet(this.canvas, playerCenterX,
-          playerCenterY - 30, speed / Math.sqrt(2), -speed / Math.sqrt(2)));
-      } else if (this.player.getDirection() === 'SE') {
-        this.gameItems.push(new Bullet(this.canvas, playerCenterX,
-          playerCenterY, speed / Math.sqrt(2), speed / Math.sqrt(2)));
-        this.gameItems.push(new Bullet(this.canvas,
-          playerCenterX, playerCenterY - 30, speed / Math.sqrt(2), speed / Math.sqrt(2)));
-      } else if (this.player.getDirection() === 'NW') {
-        this.gameItems.push(new Bullet(this.canvas, playerCenterX,
-          playerCenterY, -speed / Math.sqrt(2), -speed / Math.sqrt(2)));
-        this.gameItems.push(new Bullet(this.canvas, playerCenterX,
-          playerCenterY - 30, -speed / Math.sqrt(2), -speed / Math.sqrt(2)));
-      } else if (this.player.getDirection() === 'SW') {
-        this.gameItems.push(new Bullet(this.canvas, playerCenterX,
-          playerCenterY, -speed / Math.sqrt(2), speed / Math.sqrt(2)));
-        this.gameItems.push(new Bullet(this.canvas, playerCenterX,
-          playerCenterY - 30, -speed / Math.sqrt(2), speed / Math.sqrt(2)));
-      }
-    }
+    const bulletVectors = PlayerWeaponSystem.createBulletVectors(
+      this.currentLevel,
+      this.player.getDirection(),
+      speed,
+    );
+
+    bulletVectors.forEach((vector) => {
+      this.gameItems.push(new Bullet(
+        this.canvas,
+        playerCenterX + vector.offsetX,
+        playerCenterY + vector.offsetY,
+        vector.velocityX,
+        vector.velocityY,
+      ));
+    });
   }
 
   public abstract spawnNextItem(): void;
@@ -466,16 +351,31 @@ export default abstract class Level {
    */
   public update(elapsed: number): void {
     const itemsToRemove: GameItem[] = [];
+    const deathItemsToAdd: Death[] = [];
 
+    this.updateFrameState(elapsed);
+    this.updateTimers(elapsed);
+    this.processWormDuplication();
+
+    this.gameItems.forEach((item: GameItem) => {
+      this.processBossBehavior(item);
+      this.processPlayerCollisions(item, itemsToRemove, elapsed);
+      this.processProjectileCulling(item, itemsToRemove);
+      this.processBulletCollisions(item, itemsToRemove, deathItemsToAdd);
+      this.processTrojanBreach(item, itemsToRemove);
+    });
+
+    this.finalizeFrame(elapsed, itemsToRemove, deathItemsToAdd);
+  }
+
+  private updateFrameState(elapsed: number): void {
     this.fireCooldownRemaining = Math.max(0, this.fireCooldownRemaining - elapsed);
     this.damageFlashTimer = Math.max(0, this.damageFlashTimer - elapsed);
-    this.scorePopups = this.scorePopups
-      .map((popup: ScorePopup) => ({
-        ...popup,
-        ttl: popup.ttl - elapsed,
-        y: popup.y - GameConfig.SCORE_POPUP_SPEED_PER_MS * elapsed,
-      }))
-      .filter((popup: ScorePopup) => popup.ttl > 0);
+    this.scorePopups = TransientUiSystem.updatePopups(
+      this.scorePopups,
+      elapsed,
+      GameConfig.SCORE_POPUP_SPEED_PER_MS,
+    );
 
     if (!(this.isGameOver || this.isGameWon())) {
       this.multiplier *= Math.pow(
@@ -483,236 +383,179 @@ export default abstract class Level {
         elapsed / 1000,
       );
     }
+  }
 
+  private updateTimers(elapsed: number): void {
     this.levelTimer += elapsed;
     this.timeToSpawnEnemyOnMrHacker -= elapsed;
+  }
 
-    if (this.currentLevel == 3 && this.levelTimer >= 2000 && this.score < 600) {
-      const newWorms: Worm[] = [];
-      this.gameItems.forEach((item: Worm) => {
-        if (item instanceof Worm) {
-          const newWorm: Worm = new Worm(this.canvas, item.getPosX(), item.getPosY());
-          newWorms.push(newWorm);
-        }
-      });
-
+  private processWormDuplication(): void {
+    if (WormDuplicationSystem.shouldDuplicate(this.currentLevel, this.levelTimer, this.score)) {
+      const newWorms: Worm[] = WormDuplicationSystem.createDuplicates(this.canvas, this.gameItems);
       this.gameItems = [...this.gameItems, ...newWorms];
       this.levelTimer = 0;
       this.duplicateCount += 1;
     }
+  }
 
-    if (this.currentLevel == 4 && this.levelTimer >= 3000 && this.score < 1000) {
-      const newWorms: Worm[] = [];
-      this.gameItems.forEach((item: Worm) => {
-        if (item instanceof Worm) {
-          const newWorm: Worm = new Worm(this.canvas, item.getPosX(), item.getPosY());
-          newWorms.push(newWorm);
-        }
-      });
-
-      this.gameItems = [...this.gameItems, ...newWorms];
-      this.levelTimer = 0;
-      this.duplicateCount += 1;
+  private processBossBehavior(item: GameItem): void {
+    if (!(item instanceof MrHacker)) {
+      return;
     }
 
-    const deathItemsToAdd: Death[] = [];
-
-    this.gameItems.forEach((item: GameItem) => {
-      if (this.currentLevel === 5 && item instanceof MrHacker) {
-        const images: string[] = [
-          './assets/BossBar_Sprite/bossbar_00.png',
-          './assets/BossBar_Sprite/bossbar_01.png',
-          './assets/BossBar_Sprite/bossbar_02.png',
-          './assets/BossBar_Sprite/bossbar_03.png',
-          './assets/BossBar_Sprite/bossbar_04.png',
-          './assets/BossBar_Sprite/bossbar_05.png',
-          './assets/BossBar_Sprite/bossbar_06.png',
-          './assets/BossBar_Sprite/bossbar_07.png',
-          './assets/BossBar_Sprite/bossbar_08.png',
-          './assets/BossBar_Sprite/bossbar_09.png',
-          './assets/BossBar_Sprite/bossbar_10.png',
-          './assets/BossBar_Sprite/bossbar_11.png',
-          './assets/BossBar_Sprite/bossbar_12.png',
-          './assets/BossBar_Sprite/bossbar_13.png',
-          './assets/BossBar_Sprite/bossbar_14.png',
-          './assets/BossBar_Sprite/bossbar_15.png',
-          './assets/BossBar_Sprite/bossbar_16.png',
-          './assets/BossBar_Sprite/bossbar_17.png',
-          './assets/BossBar_Sprite/bossbar_18.png',
-          './assets/BossBar_Sprite/bossbar_19.png',
-          './assets/BossBar_Sprite/bossbar_20.png',
-          './assets/BossBar_Sprite/bossbar_21.png',
-          './assets/BossBar_Sprite/bossbar_22.png',
-          './assets/BossBar_Sprite/bossbar_23.png',
-          './assets/BossBar_Sprite/bossbar_24.png',
-          './assets/BossBar_Sprite/bossbar_25.png',
-        ];
-        this.mrHackerHealthBarImage = CanvasRenderer.loadNewImage(images[item.getHealthPoints()]);
-        this.isLoaded = true;
-        console.log(item.getHealthPoints());
-        if (item.getHealthPoints() <= 0) {
-          this.isMrHackerAlive = false;
-        }
+    if (this.currentLevel === 5) {
+      this.mrHackerHealthBarImage = CanvasRenderer.loadNewImage(
+        BossPhaseSystem.getHealthBarImage(item.getHealthPoints()),
+      );
+      this.isLoaded = true;
+      if (item.getHealthPoints() <= 0) {
+        this.isMrHackerAlive = false;
       }
-      if (item instanceof MrHacker) {
-        if (this.timeToSpawnEnemyOnMrHacker < 0) {
-          const rng: number = Math.random();
-          if (rng < 0.33) {
-            this.gameItems.push(new FEmail(this.canvas, item.getPosX() + 100, item.getPosY() + 30));
-          } else if (rng < 0.66) {
-            this.gameItems.push(new RVirus(this.canvas, item.getPosX() + 100, item.getPosY() - 30));
-          } else {
-            this.gameItems.push(new Worm(this.canvas, item.getPosX() + 100, item.getPosY() + 30));
-          }
-          this.timeToSpawnEnemyOnMrHacker = this.getBossSummonInterval(item.getHealthPoints());
-        }
-        if (item.isTimeToShoot()) {
-          const mrHackerCenterX: number = item.getPosX() + item.getWidth() / 2;
-          const mrHackerCenterY: number = item.getPosY() + item.getHeight() / 2;
-          const playerCenterX: number = this.player.getPosX() + this.player.getWidth() / 2;
-          const playerCenterY: number = this.player.getPosY() + this.player.getHeight() / 2;
-          const deltaX: number = playerCenterX - mrHackerCenterX;
-          const deltaY: number = playerCenterY - mrHackerCenterY;
-          let direction: string;
+    }
 
-          if (Math.abs(deltaX) > Math.abs(deltaY)) {
-            direction = deltaX > 0 ? 'E' : 'W';
-          } else {
-            direction = deltaY > 0 ? 'S' : 'N';
-          }
-
-          const phaseRange: { min: number; max: number; speed: number } = this.getBossShotPhase(item.getHealthPoints());
-          const angle: number = phaseRange.min + Math.random() * (phaseRange.max - phaseRange.min);
-          // Angle in degrees (negative for left direction)
-          const angleInRadians: number = (angle * Math.PI) / 180; // Convert angle to radians
-          const speed: number = phaseRange.speed;
-          const velocityX: number = Math.cos(angleInRadians) * speed;
-          // Calculate the x component of velocity
-          const velocityY: number = Math.sin(angleInRadians) * speed;
-          // Calculate the y component of velocity
-
-          switch (direction) {
-            case 'N':
-              this.gameItems.push(new EnemyBullet(this.canvas,
-                mrHackerCenterX, mrHackerCenterY, 0, -velocityY));
-              this.gameItems.push(new EnemyBullet(this.canvas,
-                mrHackerCenterX, mrHackerCenterY, velocityX, -velocityY));
-              this.gameItems.push(new EnemyBullet(this.canvas,
-                mrHackerCenterX, mrHackerCenterY, -velocityX, -velocityY));
-              break;
-            case 'S':
-              this.gameItems.push(new EnemyBullet(this.canvas,
-                mrHackerCenterX, mrHackerCenterY, 0, velocityY));
-              this.gameItems.push(new EnemyBullet(this.canvas,
-                mrHackerCenterX, mrHackerCenterY, velocityX, velocityY));
-              this.gameItems.push(new EnemyBullet(this.canvas,
-                mrHackerCenterX, mrHackerCenterY, -velocityX, velocityY));
-              break;
-            case 'E':
-              this.gameItems.push(new EnemyBullet(this.canvas,
-                mrHackerCenterX, mrHackerCenterY, velocityX, 0));
-              this.gameItems.push(new EnemyBullet(this.canvas,
-                mrHackerCenterX, mrHackerCenterY, velocityX, velocityY));
-              this.gameItems.push(new EnemyBullet(this.canvas,
-                mrHackerCenterX, mrHackerCenterY, velocityX, -velocityY));
-              break;
-            case 'W':
-              this.gameItems.push(new EnemyBullet(this.canvas,
-                mrHackerCenterX, mrHackerCenterY, -velocityX, 0));
-              this.gameItems.push(new EnemyBullet(this.canvas,
-                mrHackerCenterX, mrHackerCenterY, -velocityX, velocityY));
-              this.gameItems.push(new EnemyBullet(this.canvas,
-                mrHackerCenterX, mrHackerCenterY, -velocityX, -velocityY));
-              break;
-          }
-          item.setTimeToShoot();
-        }
-      }
-      if (
-        this.player.isPlayerColidingWithItem(item) &&
-        !(item instanceof Bullet) &&
-        !(item instanceof MrHacker) &&
-        !(item instanceof RVirus) &&
-        !(item instanceof Death)
-      ) {
-        itemsToRemove.push(item);
-        this.damegePlayer(item.getDamage());
-      }
-
-      if (this.player.isPlayerColidingWithItem(item) && (item instanceof RVirus)) {
-        if (!this.rvirusStuckToPlayer && item.getHealthPoints() > 0) {
-          item.setFollowingPlayer(this.player);
-          this.rvirusStuckToPlayer = true;
-          this.rvirusDamageTimer = 0;
-        } else {
-          this.rvirusStuckToPlayer = false;
-          this.rvirusDamageTimer += elapsed;
-          if (this.rvirusDamageTimer >= GameConfig.RVIRUS_DOT_INTERVAL_MS) {
-            this.damegePlayer(GameConfig.RVIRUS_DOT_DAMAGE);
-            this.rvirusDamageTimer = 0;
-          }
-        }
-      }
-      if (item instanceof EnemyBullet) {
-        if (item.getPosX() < this.minX * GameConfig.BULLET_CULL_MIN_MULTIPLIER
-          || item.getPosX() > this.maxX * GameConfig.BULLET_CULL_MAX_MULTIPLIER
-          || item.getPosY() < this.minY * GameConfig.BULLET_CULL_MIN_MULTIPLIER
-          || item.getPosY() > this.maxY * GameConfig.BULLET_CULL_MAX_MULTIPLIER) {
-          itemsToRemove.push(item);
-        }
-      }
-      if (item instanceof Bullet) {
-        if (item.getPosX() < this.minX * GameConfig.BULLET_CULL_MIN_MULTIPLIER
-          || item.getPosX() > this.maxX * GameConfig.BULLET_CULL_MAX_MULTIPLIER
-          || item.getPosY() < this.minY * GameConfig.BULLET_CULL_MIN_MULTIPLIER
-          || item.getPosY() > this.maxY * GameConfig.BULLET_CULL_MAX_MULTIPLIER) {
-          itemsToRemove.push(item);
-        }
-
-        // Check for collision with other game items
-        for (const otherItem of this.gameItems) {
-          if (otherItem !== item && item.isBulletColidingWithItem(otherItem)
-            && !(otherItem instanceof Death) && !(otherItem instanceof Bullet)) {
-            deathItemsToAdd.push(new Death(this, this.canvas, item.getPosX(), item.getPosY()));
-            if (otherItem instanceof RVirus && otherItem.getHealthPoints() > 5) {
-              otherItem.decreaseHealth();
-              itemsToRemove.push(item);
-            } else if (otherItem instanceof MrHacker && otherItem.getHealthPoints() > 0) {
-              otherItem.decreaseHealth();
-              itemsToRemove.push(item);
-              if (otherItem.getHealthPoints() <= 0) {
-                this.isMrHackerAlive = false;
-              }
-            } else {
-              itemsToRemove.push(item, otherItem);
-              this.score += otherItem.getScore();
-              this.scorePopups.push({
-                text: `+${otherItem.getScore()}`,
-                x: otherItem.getPosX(),
-                y: otherItem.getPosY(),
-                ttl: GameConfig.SCORE_POPUP_DURATION_MS,
-              });
-            }
-          }
-          if (otherItem instanceof Trojan && item.isBulletColidingWithItem(otherItem)) {
-            itemsToRemove.push(item, otherItem);
-            this.gameItems.push(new FEmail(this.canvas, item.getPosX() + 100, item.getPosY() + 30));
-            this.gameItems.push(new RVirus(this.canvas, item.getPosX() + 100, item.getPosY() - 30));
-            this.gameItems.push(new Worm(this.canvas, item.getPosX() + 100, item.getPosY() + 30));
-          }
-        }
-      }
-
-      if (item instanceof Trojan && item.getPosX() < this.minX) {
-        itemsToRemove.push(item);
-        this.damegePlayer(item.getDamage());
+    if (this.timeToSpawnEnemyOnMrHacker < 0) {
+      const rng: number = Math.random();
+      if (rng < 0.33) {
         this.gameItems.push(new FEmail(this.canvas, item.getPosX() + 100, item.getPosY() + 30));
+      } else if (rng < 0.66) {
         this.gameItems.push(new RVirus(this.canvas, item.getPosX() + 100, item.getPosY() - 30));
+      } else {
         this.gameItems.push(new Worm(this.canvas, item.getPosX() + 100, item.getPosY() + 30));
       }
+
+      this.timeToSpawnEnemyOnMrHacker = BossPhaseSystem.getSummonInterval(
+        item.getHealthPoints(),
+        GameConfig.BOSS_SUMMON_INTERVAL_MS,
+      );
+    }
+
+    if (!item.isTimeToShoot()) {
+      return;
+    }
+
+    const mrHackerCenterX: number = item.getPosX() + item.getWidth() / 2;
+    const mrHackerCenterY: number = item.getPosY() + item.getHeight() / 2;
+    const playerCenterX: number = this.player.getPosX() + this.player.getWidth() / 2;
+    const playerCenterY: number = this.player.getPosY() + this.player.getHeight() / 2;
+    const direction = BossPhaseSystem.resolveDirection(
+      mrHackerCenterX,
+      mrHackerCenterY,
+      playerCenterX,
+      playerCenterY,
+    );
+
+    const phaseRange = BossPhaseSystem.getShotPhase(item.getHealthPoints());
+    const angle: number = phaseRange.minAngle + Math.random() * (phaseRange.maxAngle - phaseRange.minAngle);
+    const angleInRadians: number = (angle * Math.PI) / 180;
+    const velocityX: number = Math.cos(angleInRadians) * phaseRange.bulletSpeed;
+    const velocityY: number = Math.sin(angleInRadians) * phaseRange.bulletSpeed;
+
+    const spreadVectors = BossPhaseSystem.createSpreadVectors(direction, velocityX, velocityY);
+    spreadVectors.forEach((vector) => {
+      this.gameItems.push(new EnemyBullet(
+        this.canvas,
+        mrHackerCenterX,
+        mrHackerCenterY,
+        vector.velocityX,
+        vector.velocityY,
+      ));
     });
 
-    // Remove items that should be removed
+    item.setTimeToShoot();
+  }
+
+  private processPlayerCollisions(item: GameItem, itemsToRemove: GameItem[], elapsed: number): void {
+    if (
+      this.player.isPlayerColidingWithItem(item)
+      && !(item instanceof Bullet)
+      && !(item instanceof MrHacker)
+      && !(item instanceof RVirus)
+      && !(item instanceof Death)
+    ) {
+      itemsToRemove.push(item);
+      this.damegePlayer(item.getDamage());
+    }
+
+    if (this.player.isPlayerColidingWithItem(item) && item instanceof RVirus) {
+      if (!this.rvirusStuckToPlayer && item.getHealthPoints() > 0) {
+        item.setFollowingPlayer(this.player);
+        this.rvirusStuckToPlayer = true;
+        this.rvirusDamageTimer = 0;
+      } else {
+        this.rvirusStuckToPlayer = false;
+        this.rvirusDamageTimer += elapsed;
+        if (this.rvirusDamageTimer >= GameConfig.RVIRUS_DOT_INTERVAL_MS) {
+          this.damegePlayer(GameConfig.RVIRUS_DOT_DAMAGE);
+          this.rvirusDamageTimer = 0;
+        }
+      }
+    }
+  }
+
+  private processProjectileCulling(item: GameItem, itemsToRemove: GameItem[]): void {
+    if (item instanceof EnemyBullet || item instanceof Bullet) {
+      if (item.getPosX() < this.minX * GameConfig.BULLET_CULL_MIN_MULTIPLIER
+        || item.getPosX() > this.maxX * GameConfig.BULLET_CULL_MAX_MULTIPLIER
+        || item.getPosY() < this.minY * GameConfig.BULLET_CULL_MIN_MULTIPLIER
+        || item.getPosY() > this.maxY * GameConfig.BULLET_CULL_MAX_MULTIPLIER) {
+        itemsToRemove.push(item);
+      }
+    }
+  }
+
+  private processBulletCollisions(item: GameItem, itemsToRemove: GameItem[], deathItemsToAdd: Death[]): void {
+    if (!(item instanceof Bullet)) {
+      return;
+    }
+
+    for (const otherItem of this.gameItems) {
+      if (otherItem !== item && item.isBulletColidingWithItem(otherItem)
+        && !(otherItem instanceof Death) && !(otherItem instanceof Bullet)) {
+        deathItemsToAdd.push(new Death(this, this.canvas, item.getPosX(), item.getPosY()));
+        if (otherItem instanceof RVirus && otherItem.getHealthPoints() > 5) {
+          otherItem.decreaseHealth();
+          itemsToRemove.push(item);
+        } else if (otherItem instanceof MrHacker && otherItem.getHealthPoints() > 0) {
+          otherItem.decreaseHealth();
+          itemsToRemove.push(item);
+          if (otherItem.getHealthPoints() <= 0) {
+            this.isMrHackerAlive = false;
+          }
+        } else {
+          itemsToRemove.push(item, otherItem);
+          this.score += otherItem.getScore();
+          this.scorePopups.push({
+            text: `+${otherItem.getScore()}`,
+            x: otherItem.getPosX(),
+            y: otherItem.getPosY(),
+            ttl: GameConfig.SCORE_POPUP_DURATION_MS,
+          });
+        }
+      }
+
+      if (otherItem instanceof Trojan && item.isBulletColidingWithItem(otherItem)) {
+        itemsToRemove.push(item, otherItem);
+        this.addTrojanSpawnPack(item.getPosX(), item.getPosY());
+      }
+    }
+  }
+
+  private processTrojanBreach(item: GameItem, itemsToRemove: GameItem[]): void {
+    if (item instanceof Trojan && item.getPosX() < this.minX) {
+      itemsToRemove.push(item);
+      this.damegePlayer(item.getDamage());
+      this.addTrojanSpawnPack(item.getPosX(), item.getPosY());
+    }
+  }
+
+  private addTrojanSpawnPack(posX: number, posY: number): void {
+    this.gameItems.push(new FEmail(this.canvas, posX + 100, posY + 30));
+    this.gameItems.push(new RVirus(this.canvas, posX + 100, posY - 30));
+    this.gameItems.push(new Worm(this.canvas, posX + 100, posY + 30));
+  }
+
+  private finalizeFrame(elapsed: number, itemsToRemove: GameItem[], deathItemsToAdd: Death[]): void {
     this.gameItems = this.gameItems.filter((item: GameItem) => !itemsToRemove.includes(item));
     this.gameItems.push(...deathItemsToAdd);
     this.gameItems.forEach((item: GameItem) => {
@@ -727,39 +570,5 @@ export default abstract class Level {
     }
 
     return levelLayout.scoreGate;
-  }
-
-  private getBossSummonInterval(healthPoints: number): number {
-    if (healthPoints <= 8) {
-      return 1800;
-    }
-    if (healthPoints <= 16) {
-      return 2400;
-    }
-    return GameConfig.BOSS_SUMMON_INTERVAL_MS;
-  }
-
-  private getBossShotPhase(healthPoints: number): { min: number; max: number; speed: number } {
-    if (healthPoints <= 8) {
-      return {
-        min: 20,
-        max: 65,
-        speed: 1.4,
-      };
-    }
-
-    if (healthPoints <= 16) {
-      return {
-        min: 15,
-        max: 55,
-        speed: 1.2,
-      };
-    }
-
-    return {
-      min: 10,
-      max: 45,
-      speed: 1,
-    };
   }
 }
