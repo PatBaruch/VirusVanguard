@@ -10,7 +10,7 @@ import GameConfig from './config/GameConfig.js';
 export default class Level2 extends Level {
   private currentDialogue: number;
 
-  private spawnInterval: number | null = null;
+  private spawnTimeout: number | null = null;
 
   public constructor(canvas: HTMLCanvasElement, health: number, score: number){
     super(canvas, health, score);
@@ -23,9 +23,9 @@ export default class Level2 extends Level {
   }
 
   public override onExit(): void {
-    if (this.spawnInterval !== null) {
-      clearInterval(this.spawnInterval);
-      this.spawnInterval = null;
+    if (this.spawnTimeout !== null) {
+      clearTimeout(this.spawnTimeout);
+      this.spawnTimeout = null;
     }
   }
 
@@ -76,13 +76,19 @@ export default class Level2 extends Level {
    * Spawns the next game item.
    */
   public override spawnNextItem(): void {
-    this.spawnInterval = setInterval(() => {
+    const spawnTick = (): void => {
       if (this.score < LEVEL_LAYOUTS[2].scoreGate) {
         this.gameItems.push(new RVirus(this.canvas,
           Math.random() * this.canvas.width * 0.9, Math.random() * this.canvas.height * 0.86));
-      } if (this.score >= LEVEL_LAYOUTS[2].scoreGate) {
+      } else {
         this.score = LEVEL_LAYOUTS[2].scoreGate;
       }
-    }, LEVEL_LAYOUTS[2].spawnIntervalMs);
+
+      const progress: number = Math.min(1, this.score / LEVEL_LAYOUTS[2].scoreGate);
+      const nextInterval: number = Math.round(LEVEL_LAYOUTS[2].spawnIntervalMs * (1 - progress * 0.25));
+      this.spawnTimeout = window.setTimeout(spawnTick, Math.max(500, nextInterval));
+    };
+
+    this.spawnTimeout = window.setTimeout(spawnTick, LEVEL_LAYOUTS[2].spawnIntervalMs);
   }
 }

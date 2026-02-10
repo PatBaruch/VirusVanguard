@@ -9,6 +9,7 @@ import MrHacker from './GameItem/MrHacker.js';
 import Death from './GameItem/Death.js';
 import EnemyBullet from './GameItem/EnemyBullet.js';
 import GameConfig from './config/GameConfig.js';
+import { LEVEL_LAYOUTS } from './config/LevelConfig.js';
 import ArenaBounds from './core/ArenaBounds.js';
 export default class Level {
     duplicateCount = 0;
@@ -19,7 +20,9 @@ export default class Level {
     isMrHackerAlive = true;
     mrHackerHealthBarImage;
     restart = false;
+    fireCooldownRemaining = 0;
     rvirusStuckToPlayer = false;
+    rvirusDamageTimer = 0;
     timeSinceStart = 0;
     timeToSpawnEnemyOnMrHacker = GameConfig.BOSS_SUMMON_INTERVAL_MS;
     canvas;
@@ -135,8 +138,11 @@ export default class Level {
             else if (keyListener.isKeyDown(KeyListener.KEY_D) && this.player.getPosX() < this.maxX) {
                 this.player.moveRight();
             }
-            if (keyListener.keyPressed(KeyListener.KEY_SPACE) && this.currentLevel !== 0) {
+            if (this.currentLevel !== 0
+                && keyListener.isKeyDown(KeyListener.KEY_SPACE)
+                && this.fireCooldownRemaining <= 0) {
                 this.shoot();
+                this.fireCooldownRemaining = GameConfig.PLAYER_FIRE_COOLDOWN_MS;
             }
         }
     }
@@ -161,6 +167,10 @@ export default class Level {
             CanvasRenderer.drawRectangle(canvas, this.playArea.left, this.playArea.top, this.playArea.right - this.playArea.left, this.playArea.bottom - this.playArea.top, GameConfig.BORDER_COLOR);
             CanvasRenderer.writeText(canvas, `Health: ${this.playerHealth}`, 50, 50, 'left', 'Copperplate', 60, 'white');
             CanvasRenderer.writeText(canvas, `Level: ${this.currentLevel}`, 50, 120, 'left', 'Copperplate', 60, 'Chartreuse');
+            const scoreGate = this.getCurrentScoreGate();
+            if (scoreGate > 0) {
+                CanvasRenderer.writeText(canvas, `Objective: ${Math.min(this.score, scoreGate)} / ${scoreGate}`, 50, 190, 'left', 'Copperplate', 40, GameConfig.OBJECTIVE_TEXT_COLOR);
+            }
             this.gameItems.forEach((item) => {
                 item.render(canvas);
             });
@@ -286,8 +296,9 @@ export default class Level {
     }
     update(elapsed) {
         const itemsToRemove = [];
+        this.fireCooldownRemaining = Math.max(0, this.fireCooldownRemaining - elapsed);
         if (!(this.isGameOver || this.isGameWon())) {
-            this.multiplier *= 0.9999;
+            this.multiplier *= Math.pow(GameConfig.MULTIPLIER_DECAY_PER_SECOND, elapsed / 1000);
         }
         this.levelTimer += elapsed;
         this.timeToSpawnEnemyOnMrHacker -= elapsed;
@@ -365,7 +376,7 @@ export default class Level {
                     else {
                         this.gameItems.push(new Worm(this.canvas, item.getPosX() + 100, item.getPosY() + 30));
                     }
-                    this.timeToSpawnEnemyOnMrHacker = GameConfig.BOSS_SUMMON_INTERVAL_MS;
+                    this.timeToSpawnEnemyOnMrHacker = this.getBossSummonInterval(item.getHealthPoints());
                 }
                 if (item.isTimeToShoot()) {
                     const mrHackerCenterX = item.getPosX() + item.getWidth() / 2;
@@ -381,9 +392,10 @@ export default class Level {
                     else {
                         direction = deltaY > 0 ? 'S' : 'N';
                     }
-                    const angle = 10 + Math.random() * 45;
+                    const phaseRange = this.getBossShotPhase(item.getHealthPoints());
+                    const angle = phaseRange.min + Math.random() * (phaseRange.max - phaseRange.min);
                     const angleInRadians = (angle * Math.PI) / 180;
-                    const speed = 1;
+                    const speed = phaseRange.speed;
                     const velocityX = Math.cos(angleInRadians) * speed;
                     const velocityY = Math.sin(angleInRadians) * speed;
                     switch (direction) {
@@ -423,13 +435,14 @@ export default class Level {
                 if (!this.rvirusStuckToPlayer && item.getHealthPoints() > 0) {
                     item.setFollowingPlayer(this.player);
                     this.rvirusStuckToPlayer = true;
+                    this.rvirusDamageTimer = 0;
                 }
                 else {
                     this.rvirusStuckToPlayer = false;
-                    this.levelTimer += elapsed;
-                    if (this.levelTimer >= GameConfig.RVIRUS_DOT_INTERVAL_MS) {
+                    this.rvirusDamageTimer += elapsed;
+                    if (this.rvirusDamageTimer >= GameConfig.RVIRUS_DOT_INTERVAL_MS) {
                         this.damegePlayer(GameConfig.RVIRUS_DOT_DAMAGE);
-                        this.levelTimer = 0;
+                        this.rvirusDamageTimer = 0;
                     }
                 }
             }
@@ -489,6 +502,43 @@ export default class Level {
         this.gameItems.forEach((item) => {
             item.update(elapsed);
         });
+    }
+    getCurrentScoreGate() {
+        const levelLayout = LEVEL_LAYOUTS[this.currentLevel];
+        if (levelLayout === undefined) {
+            return 0;
+        }
+        return levelLayout.scoreGate;
+    }
+    getBossSummonInterval(healthPoints) {
+        if (healthPoints <= 8) {
+            return 1800;
+        }
+        if (healthPoints <= 16) {
+            return 2400;
+        }
+        return GameConfig.BOSS_SUMMON_INTERVAL_MS;
+    }
+    getBossShotPhase(healthPoints) {
+        if (healthPoints <= 8) {
+            return {
+                min: 20,
+                max: 65,
+                speed: 1.4,
+            };
+        }
+        if (healthPoints <= 16) {
+            return {
+                min: 15,
+                max: 55,
+                speed: 1.2,
+            };
+        }
+        return {
+            min: 10,
+            max: 45,
+            speed: 1,
+        };
     }
 }
 //# sourceMappingURL=Level.js.map

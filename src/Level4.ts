@@ -10,7 +10,7 @@ import GameConfig from './config/GameConfig.js';
 export default class Level4 extends Level {
   private currentDialogue: number;
 
-  private spawnInterval: number;
+  private spawnTimeout: number | null = null;
 
   public constructor(canvas: HTMLCanvasElement, health: number, score: number){
     super(canvas, health, score);
@@ -23,7 +23,10 @@ export default class Level4 extends Level {
   }
 
   public override onExit(): void {
-    clearInterval(this.spawnInterval);
+    if (this.spawnTimeout !== null) {
+      clearTimeout(this.spawnTimeout);
+      this.spawnTimeout = null;
+    }
   }
 
   /**
@@ -73,12 +76,18 @@ export default class Level4 extends Level {
    * Spawns the next game item.
    */
   public override spawnNextItem(): void {
-    this.spawnInterval = setInterval(() => {
+    const spawnTick = (): void => {
       if (this.score < LEVEL_LAYOUTS[4].scoreGate) {
         this.gameItems.push(new Trojan(this.canvas));
-      } if (this.score >= LEVEL_LAYOUTS[4].scoreGate) {
+      } else {
         this.score = LEVEL_LAYOUTS[4].scoreGate;
       }
-    }, LEVEL_LAYOUTS[4].spawnIntervalMs);
+
+      const progress: number = Math.min(1, this.score / LEVEL_LAYOUTS[4].scoreGate);
+      const nextInterval: number = Math.round(LEVEL_LAYOUTS[4].spawnIntervalMs * (1 - progress * 0.4));
+      this.spawnTimeout = window.setTimeout(spawnTick, Math.max(900, nextInterval));
+    };
+
+    this.spawnTimeout = window.setTimeout(spawnTick, LEVEL_LAYOUTS[4].spawnIntervalMs);
   }
 }

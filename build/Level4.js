@@ -8,7 +8,7 @@ import { LEVEL_LAYOUTS } from './config/LevelConfig.js';
 import GameConfig from './config/GameConfig.js';
 export default class Level4 extends Level {
     currentDialogue;
-    spawnInterval;
+    spawnTimeout = null;
     constructor(canvas, health, score) {
         super(canvas, health, score);
         document.body.className = 'level4';
@@ -19,7 +19,10 @@ export default class Level4 extends Level {
         this.applyLayout(LEVEL_LAYOUTS[4]);
     }
     onExit() {
-        clearInterval(this.spawnInterval);
+        if (this.spawnTimeout !== null) {
+            clearTimeout(this.spawnTimeout);
+            this.spawnTimeout = null;
+        }
     }
     nextLevel() {
         if (this.isPlayerInExitGate() && this.score >= LEVEL_LAYOUTS[4].scoreGate && this.gameItems.length === 0) {
@@ -51,14 +54,18 @@ export default class Level4 extends Level {
         }
     }
     spawnNextItem() {
-        this.spawnInterval = setInterval(() => {
+        const spawnTick = () => {
             if (this.score < LEVEL_LAYOUTS[4].scoreGate) {
                 this.gameItems.push(new Trojan(this.canvas));
             }
-            if (this.score >= LEVEL_LAYOUTS[4].scoreGate) {
+            else {
                 this.score = LEVEL_LAYOUTS[4].scoreGate;
             }
-        }, LEVEL_LAYOUTS[4].spawnIntervalMs);
+            const progress = Math.min(1, this.score / LEVEL_LAYOUTS[4].scoreGate);
+            const nextInterval = Math.round(LEVEL_LAYOUTS[4].spawnIntervalMs * (1 - progress * 0.4));
+            this.spawnTimeout = window.setTimeout(spawnTick, Math.max(900, nextInterval));
+        };
+        this.spawnTimeout = window.setTimeout(spawnTick, LEVEL_LAYOUTS[4].spawnIntervalMs);
     }
 }
 //# sourceMappingURL=Level4.js.map
