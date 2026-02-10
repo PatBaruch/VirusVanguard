@@ -17,5 +17,10 @@ export default class GameConfig {
     static DIALOGUE_OFFSET_Y = 270;
     static BORDER_COLOR = 'rgba(80, 255, 160, 0.65)';
     static OBJECTIVE_TEXT_COLOR = 'gold';
+    static DAMAGE_FLASH_DURATION_MS = 180;
+    static DAMAGE_FLASH_COLOR = 'rgba(255, 40, 40, 0.22)';
+    static SCORE_POPUP_DURATION_MS = 650;
+    static SCORE_POPUP_SPEED_PER_MS = 0.05;
+    static TRANSITION_FADE_DURATION_MS = 320;
 }
 //# sourceMappingURL=GameConfig.js.map

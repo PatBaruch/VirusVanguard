@@ -16,6 +16,13 @@ import { LEVEL_LAYOUTS } from './config/LevelConfig.js';
 import ArenaBounds from './core/ArenaBounds.js';
 import type { Rect } from './types/Geometry.js';
 
+interface ScorePopup {
+  text: string;
+  x: number;
+  y: number;
+  ttl: number;
+}
+
 export default abstract class Level {
   private duplicateCount: number = 0;
 
@@ -37,9 +44,13 @@ export default abstract class Level {
 
   private rvirusStuckToPlayer: boolean = false;
 
+  private damageFlashTimer: number = 0;
+
   private rvirusDamageTimer: number = 0;
 
   private timeSinceStart: number = 0;
+
+  private scorePopups: ScorePopup[] = [];
 
   private timeToSpawnEnemyOnMrHacker: number = GameConfig.BOSS_SUMMON_INTERVAL_MS;
 
@@ -145,6 +156,7 @@ export default abstract class Level {
    */
   public damegePlayer(damage: number): void {
     this.playerHealth -= damage;
+    this.damageFlashTimer = GameConfig.DAMAGE_FLASH_DURATION_MS;
   }
 
   /**
@@ -270,6 +282,30 @@ export default abstract class Level {
         item.render(canvas);
       }
       );
+
+      this.scorePopups.forEach((popup: ScorePopup) => {
+        CanvasRenderer.writeText(
+          canvas,
+          popup.text,
+          popup.x,
+          popup.y,
+          'center',
+          'Copperplate',
+          30,
+          'Chartreuse',
+        );
+      });
+
+      if (this.damageFlashTimer > 0) {
+        CanvasRenderer.fillRectangle(
+          canvas,
+          this.playArea.left,
+          this.playArea.top,
+          this.playArea.right - this.playArea.left,
+          this.playArea.bottom - this.playArea.top,
+          GameConfig.DAMAGE_FLASH_COLOR,
+        );
+      }
     }
   }
 
@@ -417,6 +453,14 @@ export default abstract class Level {
     const itemsToRemove: GameItem[] = [];
 
     this.fireCooldownRemaining = Math.max(0, this.fireCooldownRemaining - elapsed);
+    this.damageFlashTimer = Math.max(0, this.damageFlashTimer - elapsed);
+    this.scorePopups = this.scorePopups
+      .map((popup: ScorePopup) => ({
+        ...popup,
+        ttl: popup.ttl - elapsed,
+        y: popup.y - GameConfig.SCORE_POPUP_SPEED_PER_MS * elapsed,
+      }))
+      .filter((popup: ScorePopup) => popup.ttl > 0);
 
     if (!(this.isGameOver || this.isGameWon())) {
       this.multiplier *= Math.pow(GameConfig.MULTIPLIER_DECAY_PER_SECOND, elapsed / 1000);
@@ -624,6 +668,12 @@ export default abstract class Level {
             } else {
               itemsToRemove.push(item, otherItem);
               this.score += otherItem.getScore();
+              this.scorePopups.push({
+                text: `+${otherItem.getScore()}`,
+                x: otherItem.getPosX(),
+                y: otherItem.getPosY(),
+                ttl: GameConfig.SCORE_POPUP_DURATION_MS,
+              });
             }
           }
           if (otherItem instanceof Trojan && item.isBulletColidingWithItem(otherItem)) {

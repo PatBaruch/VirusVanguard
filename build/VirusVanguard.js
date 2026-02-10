@@ -9,6 +9,7 @@ export default class VirusVanguard extends Game {
     currentLevel;
     keyListener;
     playerHealth;
+    transitionFadeTimer = 0;
     constructor(canvas) {
         super();
         this.canvas = canvas;
@@ -37,20 +38,27 @@ export default class VirusVanguard extends Game {
     render() {
         CanvasRenderer.clearCanvas(this.canvas);
         this.currentLevel.render(this.canvas);
+        if (this.transitionFadeTimer > 0) {
+            const alpha = this.transitionFadeTimer / GameConfig.TRANSITION_FADE_DURATION_MS;
+            CanvasRenderer.fillRectangle(this.canvas, 0, 0, this.canvas.width, this.canvas.height, `rgba(0, 0, 0, ${alpha})`);
+        }
         if (this.currentLevel.restartGame() === true) {
             this.currentLevel.onExit();
             this.currentLevel = new Level0(this.canvas, 100, 0);
             this.currentLevel.onEnter();
+            this.transitionFadeTimer = GameConfig.TRANSITION_FADE_DURATION_MS;
         }
     }
     update(elapsed) {
         this.currentLevel.update(elapsed);
+        this.transitionFadeTimer = Math.max(0, this.transitionFadeTimer - elapsed);
         this.playerHealth = this.currentLevel.getPlayerHealth();
         const newLevel = this.currentLevel.nextLevel();
         if (newLevel !== null) {
             this.currentLevel.onExit();
             this.currentLevel = newLevel;
             this.currentLevel.onEnter();
+            this.transitionFadeTimer = GameConfig.TRANSITION_FADE_DURATION_MS;
         }
         return true;
     }
