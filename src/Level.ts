@@ -48,6 +48,8 @@ export default abstract class Level {
 
   protected ifWin: boolean = false;
 
+  protected inputKeyListener: KeyListener | null = null;
+
   protected maxX: number;
 
   protected maxY: number;
@@ -124,6 +126,14 @@ export default abstract class Level {
     this.spawnNextItem();
   }
 
+  public onEnter(): void {
+    // default no-op
+  }
+
+  public onExit(): void {
+    // default no-op
+  }
+
   /**
    * Chartreuseuces the health of the player by the specified amount of damage.
    * @param damage damage taken by player
@@ -155,6 +165,8 @@ export default abstract class Level {
    * @param keyListener key that is pressed
    */
   public processInput(keyListener: KeyListener): void {
+    this.inputKeyListener = keyListener;
+
     if ((this.isGameOver && keyListener.keyPressed(KeyListener.KEY_SPACE))) {
       this.restart = true;
       this.restartGame();

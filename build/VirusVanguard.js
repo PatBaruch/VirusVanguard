@@ -21,6 +21,7 @@ export default class VirusVanguard extends Game {
         this.keyListener = new KeyListener();
         this.playerHealth = 100;
         this.currentLevel = new Level0(this.canvas, 100, 0);
+        this.currentLevel.onEnter();
     }
     updateViewport() {
         const viewport = Viewport.calculate(window.innerWidth, window.innerHeight, GameConfig.VIRTUAL_WIDTH, GameConfig.VIRTUAL_HEIGHT);
@@ -37,7 +38,9 @@ export default class VirusVanguard extends Game {
         CanvasRenderer.clearCanvas(this.canvas);
         this.currentLevel.render(this.canvas);
         if (this.currentLevel.restartGame() === true) {
+            this.currentLevel.onExit();
             this.currentLevel = new Level0(this.canvas, 100, 0);
+            this.currentLevel.onEnter();
         }
     }
     update(elapsed) {
@@ -45,7 +48,9 @@ export default class VirusVanguard extends Game {
         this.playerHealth = this.currentLevel.getPlayerHealth();
         const newLevel = this.currentLevel.nextLevel();
         if (newLevel !== null) {
+            this.currentLevel.onExit();
             this.currentLevel = newLevel;
+            this.currentLevel.onEnter();
         }
         return true;
     }

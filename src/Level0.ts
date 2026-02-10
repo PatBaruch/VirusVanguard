@@ -9,14 +9,11 @@ import GameConfig from './config/GameConfig.js';
 export default class Level0 extends Level {
   private currentDialogue: number;
 
-  private keyListener: KeyListener;
-
   private startScreenSkipped: boolean = false;
 
   public constructor(canvas: HTMLCanvasElement, helth: number, score: number){
     super(canvas, helth, score);
     document.body.className = 'startScreen';
-    this.keyListener = new KeyListener();
     this.currentLevel = 0;
     this.currentDialogue = 0;
     this.player = new Player();
@@ -49,7 +46,7 @@ export default class Level0 extends Level {
       '../assets/Dialogue-Level0/Level0-6.png',
     ];
 
-    if (this.keyListener.keyPressed(KeyListener.KEY_SPACE)) {
+    if (this.inputKeyListener !== null && this.inputKeyListener.keyPressed(KeyListener.KEY_SPACE)) {
       this.startScreenSkipped = true;
       if (this.startScreenSkipped) {
         this.currentDialogue += 1;
