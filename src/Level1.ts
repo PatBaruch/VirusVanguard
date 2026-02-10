@@ -6,6 +6,7 @@ import CanvasRenderer from './CanvasRenderer.js';
 import Player from './Player.js';
 import { LEVEL_LAYOUTS } from './config/LevelConfig.js';
 import GameConfig from './config/GameConfig.js';
+import RunManager from './core/RunManager.js';
 
 export default class Level1 extends Level {
   private currentDialogue: number;
@@ -86,7 +87,10 @@ export default class Level1 extends Level {
 
       const progress: number = Math.min(1, this.score / LEVEL_LAYOUTS[1].scoreGate);
       const nextInterval: number = Math.round(LEVEL_LAYOUTS[1].spawnIntervalMs * (1 - progress * 0.25));
-      this.spawnTimeout = window.setTimeout(spawnTick, Math.max(300, nextInterval));
+      this.spawnTimeout = window.setTimeout(
+        spawnTick,
+        Math.max(300, Math.round(nextInterval * RunManager.getSpawnRateMultiplier())),
+      );
     };
 
     this.spawnTimeout = window.setTimeout(spawnTick, LEVEL_LAYOUTS[1].spawnIntervalMs);

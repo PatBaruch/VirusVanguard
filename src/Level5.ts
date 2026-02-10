@@ -5,11 +5,14 @@ import CanvasRenderer from './CanvasRenderer.js';
 import Player from './Player.js';
 import { LEVEL_LAYOUTS } from './config/LevelConfig.js';
 import GameConfig from './config/GameConfig.js';
+import RunManager from './core/RunManager.js';
 
 export default class Level5 extends Level {
   private currentDialogue: number;
 
   private spawnInterval: number | null = null;
+
+  private endlessWave: number = 1;
 
   public constructor(canvas: HTMLCanvasElement, health: number, score: number) {
     super(canvas, health, score);
@@ -40,6 +43,10 @@ export default class Level5 extends Level {
    *  @returns Level | null
    */
   public override nextLevel(): Level | null {
+    if (RunManager.getRunState().mode === 'endless') {
+      return null;
+    }
+
     if (this.isPlayerInExitGate()
       && this.score >= 0 && this.gameItems.length === 0) {
       this.ifWin = true;
@@ -52,8 +59,11 @@ export default class Level5 extends Level {
    * @param canvas - The HTML canvas element.
    */
   public override render(canvas: HTMLCanvasElement): void {
-    if (this.score >= 1010 && this.gameItems.length === 0) {
+    if (this.score >= 1010 && this.gameItems.length === 0 && RunManager.getRunState().mode !== 'endless') {
       document.body.className = 'goNextLevel';
+    }
+    if (RunManager.getRunState().mode === 'endless') {
+      CanvasRenderer.writeText(canvas, `Endless Wave: ${this.endlessWave}`, 50, 260, 'left', 'Copperplate', 40, 'orange');
     }
     if (this.ifWin) {
       document.body.className = 'victory';
@@ -84,10 +94,14 @@ export default class Level5 extends Level {
         if (!this.hasStarted) {
           this.startLevel();
           this.hasStarted = true;
+        } else if (RunManager.getRunState().mode === 'endless' && this.gameItems.length === 0) {
+          this.endlessWave += 1;
+          this.score += 100;
+          this.spawnNextItem();
         }
       }
     }
-    if (this.score >= 1200 && this.gameItems.length === 0) {
+    if (this.score >= 1200 && this.gameItems.length === 0 && RunManager.getRunState().mode !== 'endless') {
       document.body.className = 'victory';
     }
   }
