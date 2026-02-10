@@ -6,6 +6,7 @@ import CanvasRenderer from './CanvasRenderer.js';
 import Player from './Player.js';
 import { LEVEL_LAYOUTS } from './config/LevelConfig.js';
 import GameConfig from './config/GameConfig.js';
+import RunManager from './core/RunManager.js';
 export default class Level4 extends Level {
     currentDialogue;
     spawnTimeout = null;
@@ -63,7 +64,7 @@ export default class Level4 extends Level {
             }
             const progress = Math.min(1, this.score / LEVEL_LAYOUTS[4].scoreGate);
             const nextInterval = Math.round(LEVEL_LAYOUTS[4].spawnIntervalMs * (1 - progress * 0.4));
-            this.spawnTimeout = window.setTimeout(spawnTick, Math.max(900, nextInterval));
+            this.spawnTimeout = window.setTimeout(spawnTick, Math.max(900, Math.round(nextInterval * RunManager.getSpawnRateMultiplier())));
         };
         this.spawnTimeout = window.setTimeout(spawnTick, LEVEL_LAYOUTS[4].spawnIntervalMs);
     }

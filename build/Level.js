@@ -11,6 +11,7 @@ import EnemyBullet from './GameItem/EnemyBullet.js';
 import GameConfig from './config/GameConfig.js';
 import { LEVEL_LAYOUTS } from './config/LevelConfig.js';
 import ArenaBounds from './core/ArenaBounds.js';
+import RunManager from './core/RunManager.js';
 export default class Level {
     duplicateCount = 0;
     enemyCount = 0;
@@ -87,11 +88,17 @@ export default class Level {
     onExit() {
     }
     damegePlayer(damage) {
-        this.playerHealth -= damage;
+        this.playerHealth -= damage * RunManager.getDamageTakenMultiplier();
         this.damageFlashTimer = GameConfig.DAMAGE_FLASH_DURATION_MS;
     }
     getPlayerHealth() {
         return this.playerHealth;
+    }
+    getScore() {
+        return this.score;
+    }
+    getFinalScore() {
+        return Math.round(this.score * this.multiplier);
     }
     isGameWon() {
         return false;
@@ -145,7 +152,7 @@ export default class Level {
                 && keyListener.isKeyDown(KeyListener.KEY_SPACE)
                 && this.fireCooldownRemaining <= 0) {
                 this.shoot();
-                this.fireCooldownRemaining = GameConfig.PLAYER_FIRE_COOLDOWN_MS;
+                this.fireCooldownRemaining = GameConfig.PLAYER_FIRE_COOLDOWN_MS * RunManager.getFireCooldownMultiplier();
             }
         }
     }
@@ -315,7 +322,7 @@ export default class Level {
         }))
             .filter((popup) => popup.ttl > 0);
         if (!(this.isGameOver || this.isGameWon())) {
-            this.multiplier *= Math.pow(GameConfig.MULTIPLIER_DECAY_PER_SECOND, elapsed / 1000);
+            this.multiplier *= Math.pow(GameConfig.MULTIPLIER_DECAY_PER_SECOND * RunManager.getMultiplierDecayMultiplier(), elapsed / 1000);
         }
         this.levelTimer += elapsed;
         this.timeToSpawnEnemyOnMrHacker -= elapsed;

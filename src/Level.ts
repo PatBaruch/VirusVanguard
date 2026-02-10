@@ -14,6 +14,7 @@ import GameConfig from './config/GameConfig.js';
 import type { LevelLayoutConfig } from './config/LevelConfig.js';
 import { LEVEL_LAYOUTS } from './config/LevelConfig.js';
 import ArenaBounds from './core/ArenaBounds.js';
+import RunManager from './core/RunManager.js';
 import type { Rect } from './types/Geometry.js';
 
 interface ScorePopup {
@@ -155,7 +156,7 @@ export default abstract class Level {
    * @param damage damage taken by player
    */
   public damegePlayer(damage: number): void {
-    this.playerHealth -= damage;
+    this.playerHealth -= damage * RunManager.getDamageTakenMultiplier();
     this.damageFlashTimer = GameConfig.DAMAGE_FLASH_DURATION_MS;
   }
 
@@ -165,6 +166,14 @@ export default abstract class Level {
    */
   public getPlayerHealth(): number {
     return this.playerHealth;
+  }
+
+  public getScore(): number {
+    return this.score;
+  }
+
+  public getFinalScore(): number {
+    return Math.round(this.score * this.multiplier);
   }
 
   /**
@@ -222,7 +231,7 @@ export default abstract class Level {
         && keyListener.isKeyDown(KeyListener.KEY_SPACE)
         && this.fireCooldownRemaining <= 0) {
         this.shoot();
-        this.fireCooldownRemaining = GameConfig.PLAYER_FIRE_COOLDOWN_MS;
+        this.fireCooldownRemaining = GameConfig.PLAYER_FIRE_COOLDOWN_MS * RunManager.getFireCooldownMultiplier();
       }
     }
   }
@@ -463,7 +472,10 @@ export default abstract class Level {
       .filter((popup: ScorePopup) => popup.ttl > 0);
 
     if (!(this.isGameOver || this.isGameWon())) {
-      this.multiplier *= Math.pow(GameConfig.MULTIPLIER_DECAY_PER_SECOND, elapsed / 1000);
+      this.multiplier *= Math.pow(
+        GameConfig.MULTIPLIER_DECAY_PER_SECOND * RunManager.getMultiplierDecayMultiplier(),
+        elapsed / 1000,
+      );
     }
 
     this.levelTimer += elapsed;
