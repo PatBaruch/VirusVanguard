@@ -9,7 +9,7 @@ import GameConfig from './config/GameConfig.js';
 
 export default class Level4 extends Level {
   private currentDialogue: number;
-  private keyListener: KeyListener;
+
   private spawnInterval: number;
 
   public constructor(canvas: HTMLCanvasElement, health: number, score: number){
@@ -18,9 +18,12 @@ export default class Level4 extends Level {
     this.currentLevel = 4;
     this.currentDialogue = 0;
     this.player = new Player();
-    this.keyListener = new KeyListener();
     this.hasStarted = false;
     this.applyLayout(LEVEL_LAYOUTS[4]);
+  }
+
+  public override onExit(): void {
+    clearInterval(this.spawnInterval);
   }
 
   /**
@@ -43,7 +46,7 @@ export default class Level4 extends Level {
       '../assets/Dialogue-Level4/Level4-1.png',
     ];
 
-    if (this.keyListener.keyPressed(KeyListener.KEY_SPACE)) {
+    if (this.inputKeyListener !== null && this.inputKeyListener.keyPressed(KeyListener.KEY_SPACE)) {
       this.currentDialogue += 1;
     }
 

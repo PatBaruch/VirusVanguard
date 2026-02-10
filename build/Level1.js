@@ -8,7 +8,6 @@ import { LEVEL_LAYOUTS } from './config/LevelConfig.js';
 import GameConfig from './config/GameConfig.js';
 export default class Level1 extends Level {
     currentDialogue;
-    keyListener;
     spawnInterval = null;
     constructor(canvas, health, score) {
         super(canvas, health, score);
@@ -16,9 +15,14 @@ export default class Level1 extends Level {
         this.currentLevel = 1;
         this.currentDialogue = 0;
         this.player = new Player();
-        this.keyListener = new KeyListener();
         this.hasStarted = false;
         this.applyLayout(LEVEL_LAYOUTS[1]);
+    }
+    onExit() {
+        if (this.spawnInterval !== null) {
+            clearInterval(this.spawnInterval);
+            this.spawnInterval = null;
+        }
     }
     nextLevel() {
         if (this.isPlayerInExitGate() && this.score >= LEVEL_LAYOUTS[1].scoreGate && this.gameItems.length === 0) {
@@ -31,7 +35,7 @@ export default class Level1 extends Level {
             '../assets/Dialogue-Level1/Level1-0.png',
             '../assets/Dialogue-Level1/Level1-1.png',
         ];
-        if (this.keyListener.keyPressed(KeyListener.KEY_SPACE)) {
+        if (this.inputKeyListener !== null && this.inputKeyListener.keyPressed(KeyListener.KEY_SPACE)) {
             this.currentDialogue += 1;
         }
         if (this.currentDialogue < dialogues.length) {

@@ -27,6 +27,7 @@ export default class Level {
     gameItems = [];
     hasStarted = false;
     ifWin = false;
+    inputKeyListener = null;
     maxX;
     maxY;
     minX;
@@ -76,6 +77,10 @@ export default class Level {
     startLevel() {
         this.spawnNextItem();
     }
+    onEnter() {
+    }
+    onExit() {
+    }
     damegePlayer(damage) {
         this.playerHealth -= damage;
     }
@@ -86,6 +91,7 @@ export default class Level {
         return false;
     }
     processInput(keyListener) {
+        this.inputKeyListener = keyListener;
         if ((this.isGameOver && keyListener.keyPressed(KeyListener.KEY_SPACE))) {
             this.restart = true;
             this.restartGame();
