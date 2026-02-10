@@ -7,6 +7,7 @@ import Player from './Player.js';
 import { LEVEL_LAYOUTS } from './config/LevelConfig.js';
 import GameConfig from './config/GameConfig.js';
 import RunManager from './core/RunManager.js';
+import SpawnCadenceSystem from './level/systems/SpawnCadenceSystem.js';
 
 export default class Level4 extends Level {
   private currentDialogue: number;
@@ -85,10 +86,16 @@ export default class Level4 extends Level {
       }
 
       const progress: number = Math.min(1, this.score / LEVEL_LAYOUTS[4].scoreGate);
-      const nextInterval: number = Math.round(LEVEL_LAYOUTS[4].spawnIntervalMs * (1 - progress * 0.4));
+      const nextInterval: number = SpawnCadenceSystem.calculateAdaptiveInterval(
+        LEVEL_LAYOUTS[4].spawnIntervalMs,
+        progress,
+        0.4,
+        900,
+        RunManager.getSpawnRateMultiplier(),
+      );
       this.spawnTimeout = window.setTimeout(
         spawnTick,
-        Math.max(900, Math.round(nextInterval * RunManager.getSpawnRateMultiplier())),
+        nextInterval,
       );
     };
 
