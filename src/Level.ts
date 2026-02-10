@@ -119,7 +119,13 @@ export default abstract class Level {
       playerWidthOffset,
       playerHeightOffset,
     );
-    this.exitGate = ArenaBounds.fromRatioRect(this.canvas, layout.exitGate, playerWidthOffset, playerHeightOffset);
+    const exitGateBounds: Rect = ArenaBounds.fromRatioRect(this.canvas, layout.exitGate);
+    this.exitGate = {
+      left: exitGateBounds.left - playerWidthOffset,
+      top: exitGateBounds.top - playerHeightOffset,
+      right: exitGateBounds.right - playerWidthOffset,
+      bottom: exitGateBounds.bottom - playerHeightOffset,
+    };
 
     this.minX = this.playArea.left;
     this.minY = this.playArea.top;

@@ -67,7 +67,13 @@ export default class Level {
         const playerWidthOffset = this.player.getWidth() / 2;
         const playerHeightOffset = this.player.getHeight() / 2;
         this.playArea = ArenaBounds.fromRatioRect(this.canvas, layout.playArea, playerWidthOffset, playerHeightOffset);
-        this.exitGate = ArenaBounds.fromRatioRect(this.canvas, layout.exitGate, playerWidthOffset, playerHeightOffset);
+        const exitGateBounds = ArenaBounds.fromRatioRect(this.canvas, layout.exitGate);
+        this.exitGate = {
+            left: exitGateBounds.left - playerWidthOffset,
+            top: exitGateBounds.top - playerHeightOffset,
+            right: exitGateBounds.right - playerWidthOffset,
+            bottom: exitGateBounds.bottom - playerHeightOffset,
+        };
         this.minX = this.playArea.left;
         this.minY = this.playArea.top;
         this.maxX = this.playArea.right;
